@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import logo from "../assets/logo.png";
 
 export default function Navbar() {
   const [dark, setDark] = useState(() => {
@@ -15,12 +16,14 @@ export default function Navbar() {
 
   return (
     <header className="topbar">
-      <div className="logo">Legacy Doc</div>
+      <Link to="/" className="logo-link">
+        <img src={logo} alt="Legacy Doc" className="logo-img" />
+      </Link>
 
       <nav>
-        <Link to="/">Início</Link>
-        <Link to="/log">Histórico</Link>
-        <Link to="/login">Entrar</Link>
+        <NavLink to="/">Início</NavLink>
+        <NavLink to="/log">Histórico</NavLink>
+        <NavLink to="/login">Entrar</NavLink>
 
         <button
           type="button"

@@ -1,15 +1,10 @@
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function Home() {
   const navigate = useNavigate();
   const [repoUrl, setRepoUrl] = useState("");
-
-  useEffect(() => {
-    const savedRepo = localStorage.getItem("repoUrl");
-    if (savedRepo) setRepoUrl(savedRepo);
-  }, []);
 
   function handleAnalyze() {
     if (!repoUrl.trim()) {
@@ -18,10 +13,6 @@ export default function Home() {
     }
 
     localStorage.setItem("repoUrl", repoUrl.trim());
-
-    
-    localStorage.setItem("filePath", "main.cpp");
-
     navigate("/loading");
   }
 
@@ -29,30 +20,38 @@ export default function Home() {
     <>
       <Navbar />
 
-      <main className="main-screen">
-        <section className="hero">
+      <main className="home-page">
+        <div className="home-overlay"></div>
+
+        <section className="home-hero">
           <span className="badge">IA para análise de código</span>
 
           <h1>Analise e entenda repositórios de código automaticamente</h1>
 
-          <p className="hero-subtitle">
+          <p>
             Cole o link de um repositório e obtenha insights sobre estrutura,
             tecnologias utilizadas e possíveis melhorias no projeto.
           </p>
 
-          <div className="repo-box">
+          <div className="home-search">
             <input
               type="url"
               placeholder="https://github.com/user/projeto"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleAnalyze();
+              }}
             />
 
-            <button className="btn" onClick={handleAnalyze}>
-             Analisar
-                </button>
+            <button type="button" onClick={handleAnalyze}>
+              Analisar
+            </button>
           </div>
         </section>
+
+        <div className="sparkle sparkle-one">✦</div>
+        <div className="sparkle sparkle-two">✦</div>
       </main>
     </>
   );
