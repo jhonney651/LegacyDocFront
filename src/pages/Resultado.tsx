@@ -8,25 +8,25 @@ type FunctionArg = {
 
 type FunctionItem = {
   name: string;
-  return_type: string;
-  args: FunctionArg[];
-  summary: string;
-  description: string;
-  raises: string[];
+  kind?: string;
+  return_type?: string;
+  args?: FunctionArg[];
+  summary?: string;
+  description?: string;
+  raises?: string[];
 };
 
-type DocumentationData = {
-  file: string;
-  summary: string;
-  functions: FunctionItem[];
+type DocumentationObject = {
+  file?: string;
+  summary?: string;
+  functions?: FunctionItem[];
 };
 
 type ApiResponse = {
   status?: string;
   file?: string;
   summary?: string;
-  functions?: FunctionItem[];
-  documentation?: DocumentationData;
+  documentation?: FunctionItem[] | DocumentationObject;
   pdf_url?: string;
 };
 
@@ -36,9 +36,24 @@ export default function Resultado() {
   const raw = localStorage.getItem("legacyDocResult");
   const result: ApiResponse | null = raw ? JSON.parse(raw) : null;
 
-  const doc = result?.documentation ?? result;
+  const functions: FunctionItem[] = Array.isArray(result?.documentation)
+    ? result.documentation
+    : result?.documentation?.functions ?? [];
 
-  if (!doc || !doc.summary) {
+  const fileName =
+    result?.file ||
+    (!Array.isArray(result?.documentation) && result?.documentation?.file) ||
+    "Arquivo analisado";
+
+  const firstFunction = functions[0];
+
+  const summary =
+    result?.summary ||
+    (!Array.isArray(result?.documentation) && result?.documentation?.summary) ||
+    firstFunction?.summary ||
+    "Documentação gerada com sucesso.";
+
+  if (!result) {
     return (
       <>
         <Navbar />
@@ -61,8 +76,6 @@ export default function Resultado() {
       </>
     );
   }
-
-  const functions = doc.functions ?? [];
 
   const totalFunctions = functions.length;
 
@@ -100,11 +113,11 @@ export default function Resultado() {
         <section className="dashboard-hero">
           <span className="badge">Resultado da análise</span>
 
-          <h1>{doc.file || result?.file || "Arquivo analisado"}</h1>
+          <h1>{fileName}</h1>
 
           <div className="dashboard-score">{totalFunctions}</div>
 
-          <p>{doc.summary}</p>
+          <p>{summary}</p>
 
           <div className="dashboard-actions">
             <button className="btn" onClick={handleDownloadPdf}>
@@ -120,7 +133,7 @@ export default function Resultado() {
         <section className="dashboard-grid">
           <div className="card metric-card">
             <h3>📦 Arquivo analisado</h3>
-            <p>{doc.file || result?.file || "Não informado"}</p>
+            <p>{fileName}</p>
           </div>
 
           <div className="card metric-card">
@@ -145,13 +158,13 @@ export default function Resultado() {
 
           <div className="card metric-card">
             <h3>📄 Status</h3>
-            <p>{result?.status ?? "success"}</p>
+            <p>{result.status ?? "success"}</p>
           </div>
         </section>
 
         <section className="card dashboard-section">
-          <h3>📑 Resumo do arquivo</h3>
-          <p>{doc.summary}</p>
+          <h3>📑 Resumo da documentação</h3>
+          <p>{summary}</p>
         </section>
 
         <section className="card dashboard-section">
@@ -165,8 +178,11 @@ export default function Resultado() {
                 <article key={`${fn.name}-${index}`} className="function-card">
                   <div className="function-header">
                     <div>
-                      <h4>{fn.name}</h4>
-                      <span>{fn.return_type || "Sem retorno informado"}</span>
+                      <h4>{fn.name || "Função sem nome"}</h4>
+                      <span>
+                        {fn.kind ? `${fn.kind} • ` : ""}
+                        {fn.return_type || "Retorno não informado"}
+                      </span>
                     </div>
 
                     <span className="function-badge">

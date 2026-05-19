@@ -21,26 +21,43 @@ export default function Loading() {
           headers: {
             "Content-Type": "application/json",
           },
+
+          /*
+            TEMPORÁRIO:
+            A API ainda exige file_path como string.
+
+            Para o teste com:
+            https://github.com/BryanMagarisca/CalculadoraPrograma.git
+
+            o arquivo correto é:
+            calculadora.cpp
+          */
           body: JSON.stringify({
             github_url: repoUrl,
-            file_path: null,
+            file_path: "calculadora.cpp",
           }),
         });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Erro do backend:", errorText);
+        const responseText = await response.text();
 
+        console.log("Status da API:", response.status);
+        console.log("Resposta da API:", responseText);
+
+        if (!response.ok) {
           alert(`Erro da API: ${response.status}`);
           navigate("/");
           return;
         }
 
-        const data = await response.json();
+        const data = JSON.parse(responseText);
 
         localStorage.setItem("legacyDocResult", JSON.stringify(data));
 
-        const doc = data?.documentation ?? data;
+        const functions = Array.isArray(data?.documentation)
+          ? data.documentation
+          : data?.documentation?.functions ?? [];
+
+        const firstFunction = functions[0];
 
         const rawHistory = localStorage.getItem("legacyDocHistory");
         const history = rawHistory ? JSON.parse(rawHistory) : [];
@@ -49,11 +66,14 @@ export default function Loading() {
           id: Date.now(),
           createdAt: new Date().toLocaleString("pt-BR"),
           repo_url: repoUrl,
-          file: doc?.file || data?.file || "Repositório analisado",
-          summary: doc?.summary || data?.summary || "Sem resumo",
+          file: data?.file || "Repositório analisado",
+          summary:
+            firstFunction?.summary ||
+            data?.summary ||
+            "Documentação gerada com sucesso.",
           status: data?.status || "success",
           pdf_url: data?.pdf_url || null,
-          total_functions: doc?.functions?.length || 0,
+          total_functions: functions.length,
         };
 
         localStorage.setItem(
