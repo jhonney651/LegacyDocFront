@@ -22,16 +22,6 @@ export default function Loading() {
             "Content-Type": "application/json",
           },
 
-          /*
-            TEMPORÁRIO:
-            A API ainda exige file_path como string.
-
-            Para o teste com:
-            https://github.com/BryanMagarisca/CalculadoraPrograma.git
-
-            o arquivo correto é:
-            calculadora.cpp
-          */
           body: JSON.stringify({
             github_url: repoUrl,
             file_path: "calculadora.cpp",
@@ -74,6 +64,7 @@ export default function Loading() {
           status: data?.status || "success",
           pdf_url: data?.pdf_url || null,
           total_functions: functions.length,
+          resultData: data,
         };
 
         localStorage.setItem(

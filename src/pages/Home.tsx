@@ -50,8 +50,6 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="sparkle sparkle-one">✦</div>
-        <div className="sparkle sparkle-two">✦</div>
       </main>
     </>
   );

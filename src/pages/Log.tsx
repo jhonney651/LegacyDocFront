@@ -1,5 +1,6 @@
 import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type HistoryItem = {
   id: number;
@@ -8,56 +9,77 @@ type HistoryItem = {
   file: string;
   summary: string;
   status: string;
-  pdf_url: string | null;
+  pdf_url?: string | null;
   total_functions?: number;
+  resultData?: unknown;
 };
 
 export default function Log() {
+  const navigate = useNavigate();
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
   function loadHistory() {
-    try {
-      const raw = localStorage.getItem("legacyDocHistory");
-
-      if (!raw) {
-        setHistory([]);
-        return;
-      }
-
-      const parsed = JSON.parse(raw);
-
-      if (Array.isArray(parsed)) {
-        setHistory(parsed);
-      } else {
-        setHistory([]);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar histórico:", error);
-      setHistory([]);
-    }
+    const raw = localStorage.getItem("legacyDocHistory");
+    const parsed = raw ? JSON.parse(raw) : [];
+    setHistory(parsed);
   }
 
   useEffect(() => {
     loadHistory();
 
-    window.addEventListener("storage", loadHistory);
-    window.addEventListener("legacydoc-history-updated", loadHistory);
-    window.addEventListener("focus", loadHistory);
+    function handleUpdate() {
+      loadHistory();
+    }
+
+    window.addEventListener("legacydoc-history-updated", handleUpdate);
 
     return () => {
-      window.removeEventListener("storage", loadHistory);
-      window.removeEventListener("legacydoc-history-updated", loadHistory);
-      window.removeEventListener("focus", loadHistory);
+      window.removeEventListener("legacydoc-history-updated", handleUpdate);
     };
   }, []);
 
   function handleClearHistory() {
-    const confirmClear = confirm("Deseja limpar todo o histórico?");
+    const confirmClear = confirm("Tem certeza que deseja limpar o histórico?");
 
     if (!confirmClear) return;
 
     localStorage.removeItem("legacyDocHistory");
     setHistory([]);
+  }
+
+  function handleViewResult(item: HistoryItem) {
+    if (item.resultData) {
+      localStorage.setItem("legacyDocResult", JSON.stringify(item.resultData));
+    } else {
+      const fallbackResult = {
+        status: item.status || "success",
+        file: item.file,
+        summary: item.summary,
+        pdf_url: item.pdf_url || null,
+        documentation: [],
+      };
+
+      localStorage.setItem("legacyDocResult", JSON.stringify(fallbackResult));
+    }
+
+    if (item.repo_url) {
+      localStorage.setItem("repoUrl", item.repo_url);
+    }
+
+    navigate("/resultado");
+  }
+
+  function handleDownload(item: HistoryItem) {
+    if (!item.pdf_url) {
+      alert("PDF não disponível para este item.");
+      return;
+    }
+
+    const pdfUrl = item.pdf_url.startsWith("http")
+      ? item.pdf_url
+      : `http://127.0.0.1:8000${item.pdf_url}`;
+
+    window.open(pdfUrl, "_blank");
   }
 
   return (
@@ -66,6 +88,8 @@ export default function Log() {
 
       <main className="main-screen">
         <section className="hero">
+          <span className="badge">Histórico</span>
+
           <h1>Histórico de documentações</h1>
 
           <p className="hero-subtitle">
@@ -80,7 +104,7 @@ export default function Log() {
 
           <div className="log-list">
             {history.length === 0 ? (
-              <div className="log-item">
+              <div className="log-item empty-history">
                 <div className="log-left">
                   <strong>Nenhuma análise ainda</strong>
                   <span className="status pending">Sem registros</span>
@@ -88,7 +112,7 @@ export default function Log() {
               </div>
             ) : (
               history.map((item) => (
-                <div key={item.id} className="log-item">
+                <article className="log-item" key={item.id}>
                   <div className="log-left">
                     <strong>{item.file}</strong>
 
@@ -102,64 +126,28 @@ export default function Log() {
                       {item.status === "success" ? "Concluído" : item.status}
                     </span>
 
-                    <small
-                      style={{
-                        marginTop: "8px",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      {item.createdAt}
-                    </small>
+                    <small>{item.createdAt}</small>
 
-                    {item.repo_url && (
-                      <small
-                        style={{
-                          marginTop: "6px",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        Repositório: {item.repo_url}
-                      </small>
+                    {typeof item.total_functions === "number" && (
+                      <small>Funções: {item.total_functions}</small>
                     )}
 
-                    <small
-                      style={{
-                        marginTop: "6px",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      Funções: {item.total_functions ?? 0}
-                    </small>
-
-                    <small
-                      style={{
-                        marginTop: "6px",
-                        color: "var(--text-secondary)",
-                      }}
-                    >
-                      {item.summary}
-                    </small>
+                    <p>{item.summary}</p>
                   </div>
 
-                  {item.pdf_url ? (
-                    <a
-                      className="btn link-btn"
-                      href={
-                        item.pdf_url.startsWith("http")
-                          ? item.pdf_url
-                          : `http://127.0.0.1:8000${item.pdf_url}`
-                      }
-                      target="_blank"
-                      rel="noreferrer"
+                  <div className="log-actions">
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => handleViewResult(item)}
                     >
-                      Download
-                    </a>
-                  ) : (
-                    <button className="btn" disabled>
-                      Sem PDF
+                      Ver resultado
                     </button>
-                  )}
-                </div>
+
+                    <button className="btn" onClick={() => handleDownload(item)}>
+                      Download
+                    </button>
+                  </div>
+                </article>
               ))
             )}
           </div>
