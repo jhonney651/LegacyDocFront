@@ -24,7 +24,7 @@ export default function Loading() {
 
           body: JSON.stringify({
             github_url: repoUrl,
-            file_path: "calculadora.cpp",
+            file_path: "TESTE",
           }),
         });
 
@@ -63,6 +63,7 @@ export default function Loading() {
             "Documentação gerada com sucesso.",
           status: data?.status || "success",
           pdf_url: data?.pdf_url || null,
+          markdown_url: data?.markdown_url || null,
           total_functions: functions.length,
           resultData: data,
         };

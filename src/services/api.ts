@@ -24,6 +24,7 @@ export type GenerateResponse = {
     }[];
   };
   pdf_url?: string;
+  markdown_url?: string;
   error?: string;
   message?: string;
 };

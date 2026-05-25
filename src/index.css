@@ -589,12 +589,12 @@ body.light .form-box input {
 .log-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .log-actions .btn {
-  min-width: 130px;
+  min-width: 100px;
 }
 
 .empty-history {

@@ -28,6 +28,7 @@ type ApiResponse = {
   summary?: string;
   documentation?: FunctionItem[] | DocumentationObject;
   pdf_url?: string;
+  markdown_url?: string;
 };
 
 function getRepoName(repoUrl: string | null) {
@@ -137,6 +138,18 @@ export default function Resultado() {
     window.open(pdfUrl, "_blank");
   }
 
+  function handleDownloadMD() {
+    if (!result?.markdown_url) {
+      alert("Markdown não disponível para este item.");
+      return;
+    }
+    const markdownUrl = result.markdown_url.startsWith("http")
+      ? result.markdown_url
+      : `http://127.0.0.1:8000${result.markdown_url}`;
+
+    window.open(markdownUrl, "_blank");
+  }
+
   if (!result) {
     return (
       <>
@@ -192,6 +205,10 @@ export default function Resultado() {
               <div className="report-actions">
                 <button className="btn" onClick={handleDownloadPdf}>
                   Baixar PDF
+                </button>
+
+                <button className="btn" onClick={handleDownloadMD}>
+                  Baixar Markdown
                 </button>
 
                 <button

@@ -10,6 +10,7 @@ type HistoryItem = {
   summary: string;
   status: string;
   pdf_url?: string | null;
+  markdown_url?: string | null;
   total_functions?: number;
   resultData?: unknown;
 };
@@ -82,6 +83,18 @@ export default function Log() {
     window.open(pdfUrl, "_blank");
   }
 
+  function handleDownloadMD(item: HistoryItem) {
+    if (!item.markdown_url) {
+      alert("Markdown não disponível para este item.");
+      return;
+    }
+    const markdownUrl = item.markdown_url.startsWith("http")
+      ? item.markdown_url
+      : `http://127.0.0.1:8000${item.markdown_url}`;
+
+    window.open(markdownUrl, "_blank");
+  }
+
   return (
     <>
       <Navbar />
@@ -140,11 +153,15 @@ export default function Log() {
                       className="btn btn-secondary"
                       onClick={() => handleViewResult(item)}
                     >
-                      Ver resultado
+                      Resultado
                     </button>
 
                     <button className="btn" onClick={() => handleDownload(item)}>
-                      Download
+                      PDF
+                    </button>
+
+                    <button className="btn" onClick={() => handleDownloadMD(item)}>
+                      Markdown
                     </button>
                   </div>
                 </article>
