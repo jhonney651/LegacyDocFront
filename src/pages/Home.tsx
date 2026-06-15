@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { getAuthToken } from "../services/api";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -9,6 +10,11 @@ export default function Home() {
   function handleAnalyze() {
     if (!repoUrl.trim()) {
       alert("Cole um link de repositório.");
+      return;
+    }
+
+    if (!getAuthToken()) {
+      navigate("/login");
       return;
     }
 

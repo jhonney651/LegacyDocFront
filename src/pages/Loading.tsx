@@ -1,66 +1,63 @@
 import Navbar from "../components/Navbar";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { generateDocumentation } from "../services/api";
+
+function readHistory() {
+  const rawHistory = localStorage.getItem("legacyDocHistory");
+
+  if (!rawHistory) return [];
+
+  try {
+    const parsed = JSON.parse(rawHistory);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function Loading() {
   const navigate = useNavigate();
+  const hasStarted = useRef(false);
 
   useEffect(() => {
     async function gerarAnalise() {
+      if (hasStarted.current) return;
+      hasStarted.current = true;
+
       const repoUrl = localStorage.getItem("repoUrl");
 
       if (!repoUrl) {
-        alert("Nenhum repositório informado.");
+        alert("Nenhum repositorio informado.");
         navigate("/");
         return;
       }
 
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/generate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            github_url: repoUrl,
-            file_path: "TESTE",
-          }),
+        const data = await generateDocumentation({
+          github_url: repoUrl,
+          file_path: "TESTE",
         });
-
-        const responseText = await response.text();
-
-        console.log("Status da API:", response.status);
-        console.log("Resposta da API:", responseText);
-
-        if (!response.ok) {
-          alert(`Erro da API: ${response.status}`);
-          navigate("/");
-          return;
-        }
-
-        const data = JSON.parse(responseText);
 
         localStorage.setItem("legacyDocResult", JSON.stringify(data));
 
         const functions = Array.isArray(data?.documentation)
           ? data.documentation
-          : data?.documentation?.functions ?? [];
+          : [];
 
         const firstFunction = functions[0];
 
-        const rawHistory = localStorage.getItem("legacyDocHistory");
-        const history = rawHistory ? JSON.parse(rawHistory) : [];
+        const history = readHistory();
 
         const newItem = {
           id: Date.now(),
           createdAt: new Date().toLocaleString("pt-BR"),
           repo_url: repoUrl,
-          file: data?.file || "Repositório analisado",
+          file: data?.file || "Repositorio analisado",
           summary:
             firstFunction?.summary ||
-            data?.summary ||
-            "Documentação gerada com sucesso.",
+            data?.message ||
+            "Documentacao gerada com sucesso.",
           status: data?.status || "success",
           pdf_url: data?.pdf_url || null,
           markdown_url: data?.markdown_url || null,
@@ -77,8 +74,8 @@ export default function Loading() {
 
         navigate("/resultado");
       } catch (error) {
-        console.error("Erro ao gerar documentação:", error);
-        alert("Erro ao gerar documentação.");
+        console.error("Erro ao gerar documentacao:", error);
+        alert(error instanceof Error ? error.message : "Erro ao gerar documentacao.");
         navigate("/");
       }
     }
@@ -94,10 +91,10 @@ export default function Loading() {
         <section className="hero">
           <span className="badge">Processando</span>
 
-          <h1>Gerando documentação...</h1>
+          <h1>Gerando documentacao...</h1>
 
           <p className="hero-subtitle">
-            Nossa IA está analisando o repositório e organizando as informações.
+            Nossa IA esta analisando o repositorio e organizando as informacoes.
           </p>
 
           <div className="loader"></div>

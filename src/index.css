@@ -247,7 +247,8 @@ body.light .topbar {
   gap: 8px;
 }
 
-.topbar nav a {
+.topbar nav a,
+.nav-link-button {
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 0.95rem;
@@ -255,9 +256,12 @@ body.light .topbar {
   padding: 10px 14px;
   border-radius: 12px;
   transition: 0.2s ease;
+  background: transparent;
+  cursor: pointer;
 }
 
-.topbar nav a:hover {
+.topbar nav a:hover,
+.nav-link-button:hover {
   color: var(--text);
   background: rgba(59, 130, 246, 0.12);
 }
@@ -269,8 +273,9 @@ body.light .topbar {
 }
 
 .theme-btn {
-  width: 42px;
+  min-width: 42px;
   height: 42px;
+  padding: 0 12px;
   background: var(--card-solid);
   border: 1px solid var(--border);
   color: var(--text);
@@ -495,6 +500,18 @@ body.light .form-box input {
   height: 54px;
   margin-top: 4px;
   border-radius: 16px;
+}
+
+.form-box button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.form-error {
+  margin: 0;
+  color: #fca5a5;
+  font-size: 0.9rem;
 }
 
 .link {
@@ -1350,7 +1367,8 @@ body.light .result-page {
     gap: 4px;
   }
 
-  .topbar nav a {
+  .topbar nav a,
+  .nav-link-button {
     font-size: 0.82rem;
     padding: 8px 9px;
   }

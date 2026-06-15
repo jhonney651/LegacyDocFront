@@ -1,5 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
+import { resolveBackendUrl } from "../services/api";
 
 type FunctionArg = {
   name: string;
@@ -131,11 +133,9 @@ export default function Resultado() {
       return;
     }
 
-    const pdfUrl = result.pdf_url.startsWith("http")
-      ? result.pdf_url
-      : `http://127.0.0.1:8000${result.pdf_url}`;
+    const pdfUrl = resolveBackendUrl(result.pdf_url);
 
-    window.open(pdfUrl, "_blank");
+    if (pdfUrl) window.open(pdfUrl, "_blank");
   }
 
   function handleDownloadMD() {
@@ -143,11 +143,9 @@ export default function Resultado() {
       alert("Markdown não disponível para este item.");
       return;
     }
-    const markdownUrl = result.markdown_url.startsWith("http")
-      ? result.markdown_url
-      : `http://127.0.0.1:8000${result.markdown_url}`;
+    const markdownUrl = resolveBackendUrl(result.markdown_url);
 
-    window.open(markdownUrl, "_blank");
+    if (markdownUrl) window.open(markdownUrl, "_blank");
   }
 
   if (!result) {
@@ -182,7 +180,7 @@ export default function Resultado() {
         <section className="report-paper">
           <header className="report-header">
             <div className="report-brand">
-            <img src="\src\assets\logo.png" alt="Legacy Doc" className="report-logo-img" />
+            <img src={logo} alt="Legacy Doc" className="report-logo-img" />
             </div>
 
             <div className="report-generated">
@@ -197,10 +195,7 @@ export default function Resultado() {
 
               <h1>Documentação Técnica Automatizada</h1>
 
-              <p>
-                Visão técnica completa e organizada do projeto, gerada
-                automaticamente a partir da análise do código-fonte.
-              </p>
+              <p>{summary}</p>
 
               <div className="report-actions">
                 <button className="btn" onClick={handleDownloadPdf}>

@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { resolveBackendUrl } from "../services/api";
 
 type HistoryItem = {
   id: number;
@@ -15,27 +16,34 @@ type HistoryItem = {
   resultData?: unknown;
 };
 
+function readHistory(): HistoryItem[] {
+  const raw = localStorage.getItem("legacyDocHistory");
+
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function Log() {
   const navigate = useNavigate();
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-
-  function loadHistory() {
-    const raw = localStorage.getItem("legacyDocHistory");
-    const parsed = raw ? JSON.parse(raw) : [];
-    setHistory(parsed);
-  }
+  const [history, setHistory] = useState<HistoryItem[]>(readHistory);
 
   useEffect(() => {
-    loadHistory();
-
     function handleUpdate() {
-      loadHistory();
+      setHistory(readHistory());
     }
 
     window.addEventListener("legacydoc-history-updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
 
     return () => {
       window.removeEventListener("legacydoc-history-updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
     };
   }, []);
 
@@ -76,11 +84,9 @@ export default function Log() {
       return;
     }
 
-    const pdfUrl = item.pdf_url.startsWith("http")
-      ? item.pdf_url
-      : `http://127.0.0.1:8000${item.pdf_url}`;
+    const pdfUrl = resolveBackendUrl(item.pdf_url);
 
-    window.open(pdfUrl, "_blank");
+    if (pdfUrl) window.open(pdfUrl, "_blank");
   }
 
   function handleDownloadMD(item: HistoryItem) {
@@ -88,11 +94,9 @@ export default function Log() {
       alert("Markdown não disponível para este item.");
       return;
     }
-    const markdownUrl = item.markdown_url.startsWith("http")
-      ? item.markdown_url
-      : `http://127.0.0.1:8000${item.markdown_url}`;
+    const markdownUrl = resolveBackendUrl(item.markdown_url);
 
-    window.open(markdownUrl, "_blank");
+    if (markdownUrl) window.open(markdownUrl, "_blank");
   }
 
   return (
