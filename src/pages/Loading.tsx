@@ -36,7 +36,7 @@ export default function Loading() {
 
       if (!repoUrl) {
         alert("Nenhum repositório informado.");
-        navigate("/");
+        navigate("/", { viewTransition: true });
         return;
       }
 
@@ -77,11 +77,11 @@ export default function Loading() {
 
         window.dispatchEvent(new Event("legacydoc-history-updated"));
 
-        navigate("/resultado");
+        navigate("/resultado", { viewTransition: true });
       } catch (error) {
         console.error("Erro ao gerar documentacao:", error);
         alert(error instanceof Error ? error.message : "Erro ao gerar documentação.");
-        navigate("/");
+        navigate("/", { viewTransition: true });
       }
     }
 

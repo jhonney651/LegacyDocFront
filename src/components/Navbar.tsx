@@ -43,19 +43,19 @@ export default function Navbar() {
       </a>
 
     <header className="topbar">
-      <Link to="/" className="logo-link">
+      <Link to="/" viewTransition className="logo-link">
         <img src={logo} alt="Legacy Doc" className="logo-img" />
       </Link>
 
       <nav>
-        <NavLink to="/">Inicio</NavLink>
-        <NavLink to="/log">Historico</NavLink>
+        <NavLink viewTransition to="/">Inicio</NavLink>
+        <NavLink viewTransition to="/log">Historico</NavLink>
         {isAuthenticated ? (
           <button type="button" className="nav-link-button" onClick={handleLogout}>
             Sair
           </button>
         ) : (
-          <NavLink to="/login">Entrar</NavLink>
+          <NavLink viewTransition to="/login">Entrar</NavLink>
         )}
 
         <button

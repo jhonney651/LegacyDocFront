@@ -75,7 +75,7 @@ export default function Log() {
       localStorage.setItem("repoUrl", item.repo_url);
     }
 
-    navigate("/resultado");
+    navigate("/resultado", { viewTransition: true });
   }
 
   async function handleDownload(item: HistoryItem) {

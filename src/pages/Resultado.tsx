@@ -8,6 +8,7 @@ import {
   getDocument,
   type DocumentSummary,
 } from "../services/api";
+import { useRevelar } from "../hooks/useRevelar";
 
 type FunctionArg = {
   name: string;
@@ -88,6 +89,7 @@ function getStackByLanguage(language: string) {
 }
 
 export default function Resultado() {
+
   const navigate = useNavigate();
 
   const raw = localStorage.getItem("legacyDocResult");
@@ -102,6 +104,10 @@ export default function Resultado() {
   const [loadingFile, setLoadingFile] = useState<string | null>(null);
 
   const documents = result?.documents ?? [];
+
+  // Reobserva quando o arquivo aberto muda: a troca renderiza um conteudo
+  // novo, e quem chegou depois tambem precisa ser revelado.
+  useRevelar([result?.file]);
 
   async function abrirArquivo(item: DocumentSummary) {
     if (loadingFile || item.path === result?.file) return;
@@ -203,7 +209,7 @@ export default function Resultado() {
               Faça uma análise antes de acessar esta página.
             </p>
 
-            <button className="btn" onClick={() => navigate("/")}>
+            <button className="btn" onClick={() => navigate("/", { viewTransition: true })}>
               Voltar
             </button>
           </section>
@@ -257,7 +263,7 @@ export default function Resultado() {
 
                 <button
                   className="btn btn-secondary"
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/", { viewTransition: true })}
                 >
                   Nova análise
                 </button>
@@ -282,7 +288,7 @@ export default function Resultado() {
 
               <div className="repo-row">
                 <span>Arquivo</span>
-                <strong>{fileName}</strong>
+                <strong className="file-path">{fileName}</strong>
               </div>
 
               <div className="repo-row">
@@ -342,7 +348,9 @@ export default function Resultado() {
                           opacity: loadingFile && loadingFile !== item.path ? 0.5 : 1,
                         }}
                       >
-                        <strong>{item.path.split("/").pop()}</strong>
+                        <strong className="file-path">
+                          {item.path.split("/").pop()}
+                        </strong>
                         <span style={{ opacity: 0.65, marginLeft: 8 }}>
                           {item.symbol_count} símbolos
                           {item.finding_count > 0 && ` · ${item.finding_count} pontos`}
@@ -358,7 +366,7 @@ export default function Resultado() {
 
           <div className="report-divider"></div>
 
-          <section className="report-two-columns">
+          <section className="report-two-columns" data-revelar>
             <div className="stack-card">
               <div className="section-heading">
                 <span>▤</span>
@@ -399,7 +407,7 @@ export default function Resultado() {
             </div>
           </section>
 
-          <section className="metrics-row">
+          <section className="metrics-row" data-revelar>
             <div className="report-metric">
               <span>ƒx</span>
               <p>Funções detectadas</p>
@@ -425,7 +433,7 @@ export default function Resultado() {
             </div>
           </section>
 
-          <section className="report-grid-bottom">
+          <section className="report-grid-bottom" data-revelar>
             <div className="code-insight-card">
               <div className="section-heading">
                 <span>&lt;/&gt;</span>
@@ -493,7 +501,7 @@ status: ${result.status || "success"}`}
               <div className="project-summary-list">
                 <div>
                   <span>Arquivo analisado</span>
-                  <strong>{fileName}</strong>
+                  <strong className="file-path">{fileName}</strong>
                 </div>
 
                 <div>
@@ -532,6 +540,7 @@ status: ${result.status || "success"}`}
                 {functions.map((fn, index) => (
                   <article
                     className="function-report-card"
+                    data-revelar
                     key={`${fn.name}-${index}`}
                   >
                     <div className="function-report-header">

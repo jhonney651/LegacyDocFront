@@ -1,7 +1,8 @@
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAuthToken, getCurrentUser, type CurrentUser } from "../services/api";
+import { useRevelar } from "../hooks/useRevelar";
 
 type DepthInfo = {
   title: string;
@@ -35,11 +36,40 @@ const DEPTH_INFO: Record<string, DepthInfo> = {
 };
 
 export default function Home() {
+
   const navigate = useNavigate();
   const [repoUrl, setRepoUrl] = useState("");
   const [branch, setBranch] = useState("");
   const [depth, setDepth] = useState("");
   const [account, setAccount] = useState<CurrentUser | null>(null);
+  const campoRepo = useRef<HTMLInputElement>(null);
+
+  // Reobserva quando a conta carrega: os cartoes de profundidade so
+  // existem depois que a API responde qual e o plano.
+  useRevelar([account?.id]);
+
+  // Atalho "/" para cair no campo, como GitHub, Slack e todo editor.
+  // Quem usa a ferramenta passa o dia no teclado; obrigar a pegar o
+  // mouse para comecar e a fricção mais boba que existe.
+  useEffect(() => {
+    function aoTeclar(evento: KeyboardEvent) {
+      if (evento.key !== "/" || evento.defaultPrevented) return;
+
+      const alvo = evento.target as HTMLElement | null;
+      const digitando =
+        alvo instanceof HTMLInputElement ||
+        alvo instanceof HTMLTextAreaElement ||
+        alvo?.isContentEditable;
+
+      if (digitando) return;
+
+      evento.preventDefault();
+      campoRepo.current?.focus();
+    }
+
+    window.addEventListener("keydown", aoTeclar);
+    return () => window.removeEventListener("keydown", aoTeclar);
+  }, []);
 
   // A escada de profundidades vem da API, nao fica fixa aqui. O backend e a
   // fonte da verdade sobre o que cada plano libera, e uma copia no front
@@ -62,14 +92,14 @@ export default function Home() {
     }
 
     if (!getAuthToken()) {
-      navigate("/login");
+      navigate("/login", { viewTransition: true });
       return;
     }
 
     localStorage.setItem("repoUrl", repoUrl.trim());
     localStorage.setItem("repoBranch", branch.trim());
     localStorage.setItem("repoDepth", depth);
-    navigate("/loading");
+    navigate("/loading", { viewTransition: true });
   }
 
   const depths = account?.plan.available_depths ?? [];
@@ -96,7 +126,9 @@ export default function Home() {
 
           <div className="home-search">
             <input
+              ref={campoRepo}
               type="url"
+              aria-label="URL do repositório"
               placeholder="https://github.com/user/projeto"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
@@ -104,6 +136,10 @@ export default function Home() {
                 if (e.key === "Enter") handleAnalyze();
               }}
             />
+
+            <span className="search-hint" aria-hidden="true">
+              <kbd>/</kbd> para focar
+            </span>
 
             <button type="button" onClick={handleAnalyze}>
               Analisar
@@ -128,7 +164,7 @@ export default function Home() {
           )}
 
           {account && depths.length > 0 && (
-            <fieldset className="depth-options">
+            <fieldset className="depth-options" data-revelar>
               <legend className="sr-only">Profundidade da análise</legend>
 
               {depths.map((item) => {

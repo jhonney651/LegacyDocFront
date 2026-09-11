@@ -1,24 +1,44 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap");
 
 /* =========================================================
-   CORREÇÃO GLOBAL DE FUNDO / FAIXA BRANCA
+   RAIZ
+
+   `overflow-x: hidden` aqui criava tres containers de rolagem
+   aninhados, porque esconder um eixo obriga o outro a rolar.
+   O documento ficava com altura zero e quem rolava era o #root.
+
+   Isso quebra rolagem ancorada, `position: sticky` e qualquer
+   animacao medida contra a viewport. `clip` corta no mesmo eixo
+   sem criar container, entao volta a existir um unico scroller:
+   o documento.
 ========================================================= */
 
 html,
 body,
 #root {
   width: 100%;
-  min-height: 100%;
   margin: 0;
   padding: 0;
+  overflow-x: clip;
+}
+
+html,
+body {
+  min-height: 100%;
   background: var(--bg);
-  overflow-x: hidden;
 }
 
 body {
-  min-height: 100vh;
-  background: var(--bg);
+  min-height: 100svh;
   color: var(--text);
+}
+
+/* Rolagem suave nas ancoras, respeitando quem pediu menos
+   movimento. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* =========================================================
@@ -734,7 +754,12 @@ body.light .result-page {
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  overflow: hidden;
+
+  /* `clip` e nao `hidden`: os dois cortam o canto arredondado, mas
+     `hidden` cria um container de rolagem, e `animation-timeline: view()`
+     mede contra o scroller mais proximo. Com um scroller que nunca rola,
+     o conteudo fica sempre "em vista" e a revelacao nunca acontece. */
+  overflow: clip;
 
   border-radius: 28px;
   background: var(--paper-bg);
@@ -1289,7 +1314,7 @@ body.light .result-page {
 }
 
 .function-report-card {
-  overflow: hidden;
+  overflow: clip;
 
   border-radius: 18px;
   background: var(--paper-raised);
@@ -1929,4 +1954,143 @@ body.light .pro-badge {
 .report-paper .pro-badge::before {
   background: var(--brand-600);
   box-shadow: none;
+}
+
+/* =========================================================
+   23. MOVIMENTO
+
+   Animacao ligada a rolagem, sem biblioteca e sem JavaScript.
+   `animation-timeline: view()` amarra o progresso da animacao a
+   posicao do elemento na janela, entao o navegador resolve em
+   thread propria e nada disso disputa com o React.
+
+   Tudo aqui e progressivo: onde nao houver suporte o elemento
+   simplesmente aparece, e a secao de acessibilidade ja corta o
+   movimento inteiro para quem pediu.
+========================================================= */
+
+/* O estado padrao e visivel. `por-revelar` so e aplicada pelo observador,
+   depois de ele existir e confirmar que vai revelar. Script quebrado ou
+   ausente deixa o conteudo como esta: legivel. Animacao e decoracao e nao
+   pode esconder documento.
+
+   Fora de media query de proposito: quem decide se anima e o hook, que ja
+   consulta a preferencia de movimento antes de aplicar a classe. Uma
+   segunda checagem aqui so cria dois lugares para a regra divergir. */
+.por-revelar {
+  opacity: 0.2;
+  transform: translateY(20px);
+  transition: opacity 520ms var(--ease), transform 520ms var(--ease);
+  will-change: opacity, transform;
+}
+
+.revelado {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Entrada de elemento novo na arvore. `@starting-style` da ao
+     navegador o estado de onde partir, o que antes exigia um truque
+     de duas renderizacoes no React. */
+  @starting-style {
+    .entrar {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+
+  .entrar {
+    opacity: 1;
+    transform: none;
+    transition: opacity 320ms var(--ease), transform 320ms var(--ease);
+  }
+}
+
+/* --------------------------------------------- view transitions */
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: sair-transicao 180ms var(--ease) both;
+  }
+
+  ::view-transition-new(root) {
+    animation: entrar-transicao 260ms var(--ease) both;
+  }
+
+  @keyframes sair-transicao {
+    to {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes entrar-transicao {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+}
+
+/* =========================================================
+   24. DETALHES PARA QUEM ESCREVE CODIGO
+
+   A pessoa que usa isto passa o dia num editor. Caminho de
+   arquivo, nome de simbolo e assinatura sao codigo e devem
+   parecer codigo: monoespacados, alinhados, selecionaveis.
+========================================================= */
+
+.mono,
+.file-path,
+.symbol-name {
+  font-family: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Cascadia Code",
+    Consolas, monospace;
+  font-variant-ligatures: none;
+  font-size: 0.92em;
+}
+
+/* Atalho de teclado. Mesmo desenho que editor e terminal usam,
+   entao le como tecla sem precisar de legenda. */
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 22px;
+  padding: 2px 7px;
+
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+
+  background: var(--card-dark);
+  color: var(--text-secondary);
+
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.search-hint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  padding-right: 4px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Some quando nao ha espaco: a dica e conveniencia, o campo nao. */
+@container (max-width: 520px) {
+  .search-hint {
+    display: none;
+  }
+}
+
+.home-search {
+  container-type: inline-size;
 }
