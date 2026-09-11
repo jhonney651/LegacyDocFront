@@ -7,6 +7,7 @@ import Log from "./pages/Log";
 import Login from "./pages/Login";
 import CriarConta from "./pages/CriarConta";
 import TrocaSenha from "./pages/TrocaSenha";
+import NovaSenha from "./pages/NovaSenha";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/criar-conta" element={<CriarConta />} />
         <Route path="/troca-senha" element={<TrocaSenha />} />
+        <Route path="/nova-senha" element={<NovaSenha />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
-import { resolveBackendUrl } from "../services/api";
+import { downloadArtifact } from "../services/api";
 
 type FunctionArg = {
   name: string;
@@ -127,25 +127,30 @@ export default function Resultado() {
     Math.min(96, 88 - functionsWithRaises * 4 + functionsWithArgs * 2)
   );
 
-  function handleDownloadPdf() {
+  async function handleDownloadPdf() {
     if (!result?.pdf_url) {
       alert("PDF ainda não disponível.");
       return;
     }
 
-    const pdfUrl = resolveBackendUrl(result.pdf_url);
-
-    if (pdfUrl) window.open(pdfUrl, "_blank");
+    try {
+      await downloadArtifact(result.pdf_url, "documentacao.pdf");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Falha ao baixar o PDF.");
+    }
   }
 
-  function handleDownloadMD() {
+  async function handleDownloadMD() {
     if (!result?.markdown_url) {
       alert("Markdown não disponível para este item.");
       return;
     }
-    const markdownUrl = resolveBackendUrl(result.markdown_url);
 
-    if (markdownUrl) window.open(markdownUrl, "_blank");
+    try {
+      await downloadArtifact(result.markdown_url, "documentacao.md");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Falha ao baixar o Markdown.");
+    }
   }
 
   if (!result) {

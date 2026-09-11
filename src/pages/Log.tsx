@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { resolveBackendUrl } from "../services/api";
+import { downloadArtifact } from "../services/api";
 
 type HistoryItem = {
   id: number;
@@ -78,25 +78,30 @@ export default function Log() {
     navigate("/resultado");
   }
 
-  function handleDownload(item: HistoryItem) {
+  async function handleDownload(item: HistoryItem) {
     if (!item.pdf_url) {
       alert("PDF não disponível para este item.");
       return;
     }
 
-    const pdfUrl = resolveBackendUrl(item.pdf_url);
-
-    if (pdfUrl) window.open(pdfUrl, "_blank");
+    try {
+      await downloadArtifact(item.pdf_url, "documentacao.pdf");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Falha ao baixar o PDF.");
+    }
   }
 
-  function handleDownloadMD(item: HistoryItem) {
+  async function handleDownloadMD(item: HistoryItem) {
     if (!item.markdown_url) {
       alert("Markdown não disponível para este item.");
       return;
     }
-    const markdownUrl = resolveBackendUrl(item.markdown_url);
 
-    if (markdownUrl) window.open(markdownUrl, "_blank");
+    try {
+      await downloadArtifact(item.markdown_url, "documentacao.md");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Falha ao baixar o Markdown.");
+    }
   }
 
   return (
