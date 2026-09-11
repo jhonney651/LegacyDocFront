@@ -222,7 +222,13 @@ export default function Resultado() {
     <>
       <Navbar />
 
-      <main id="conteudo" className="result-page">
+      <main
+        id="conteudo"
+        className="result-page"
+        data-modo={result.depth === "pro" ? "pro" : undefined}
+      >
+        {/* Documento auditado veste a cor do Pro. Quem abre um relatorio do
+            nivel mais raso ve azul e reconhece a diferenca sem legenda. */}
         <section className="report-paper">
           <header className="report-header">
             <div className="report-brand">

@@ -48,6 +48,19 @@ export default function Home() {
   // existem depois que a API responde qual e o plano.
   useRevelar([account?.id]);
 
+  // O modo Pro veste a pagina inteira, barra de navegacao incluida. Metade
+  // da tela mudando de cor e a outra metade nao pareceria defeito, nao
+  // recompensa. Sai ao deixar a tela, senao a cor vaza para as outras.
+  useEffect(() => {
+    if (depth !== "pro") return;
+
+    document.body.dataset.modo = "pro";
+
+    return () => {
+      delete document.body.dataset.modo;
+    };
+  }, [depth]);
+
   // Atalho "/" para cair no campo, como GitHub, Slack e todo editor.
   // Quem usa a ferramenta passa o dia no teclado; obrigar a pegar o
   // mouse para comecar e a fricção mais boba que existe.
@@ -111,6 +124,9 @@ export default function Home() {
     <>
       <Navbar />
 
+      {/* O atributo troca a escala de cor da pagina inteira. Nao e enfeite
+          no cartao: a tela responde a escolha, que e o argumento de por que
+          o nivel mais profundo vale a pena. */}
       <main id="conteudo" className="home-page">
         <div className="home-overlay"></div>
 
@@ -176,6 +192,7 @@ export default function Home() {
                   <button
                     type="button"
                     className="depth-card"
+                    data-modo={ehPro ? "pro" : undefined}
                     aria-pressed={selecionado}
                     onClick={() => setDepth(item)}
                   >
@@ -188,9 +205,9 @@ export default function Home() {
                   </button>
                 );
 
-                // A moldura girando so envolve o degrau mais profundo, e so
-                // quando ele esta escolhido: animar o tempo todo compete com
-                // a leitura das outras opcoes.
+                // A moldura girando so envolve o degrau mais profundo quando
+                // ele esta escolhido. Fora disso o cartao fica igual aos
+                // outros, senao a animacao compete com a leitura das opcoes.
                 return ehPro && selecionado ? (
                   <div className="pro-frame" key={item}>
                     {cartao}
