@@ -88,6 +88,15 @@ export type Job = {
   error_message: string | null;
   document_count: number;
   depth: string;
+  project_id: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+};
+
+export type JobList = {
+  items: Job[];
+  total: number;
 };
 
 export type DocumentSummary = {
@@ -149,12 +158,23 @@ export function getAuthToken() {
 }
 
 export function setAuthToken(token: string) {
+  // Entrar tambem limpa. Sair com a aba fechada, expirar a sessao ou trocar de
+  // conta sem passar pelo botao de sair sao caminhos reais, e em todos eles o
+  // que ficou no navegador nao pertence a quem esta entrando agora.
+  clearLocalSession();
+
   localStorage.setItem(AUTH_TOKEN_KEY, token);
   window.dispatchEvent(new Event("legacydoc-auth-updated"));
 }
 
 export function clearAuthToken() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
+
+  // Sair tem de levar junto o que a sessão deixou na maquina. Apagar so o
+  // token deixava o ultimo resultado e a URL analisada visiveis para a
+  // proxima pessoa que entrasse neste navegador.
+  clearLocalSession();
+
   window.dispatchEvent(new Event("legacydoc-auth-updated"));
 }
 
@@ -256,6 +276,32 @@ export async function createRepositoryJob(params: {
 
 export async function getJob(jobId: string) {
   return get<Job>(`/v1/jobs/${jobId}`);
+}
+
+/**
+ * Histórico da conta que está autenticada agora.
+ *
+ * A lista vem do servidor, e não do navegador. O histórico costumava morar em
+ * `localStorage`, o que parecia inofensivo e não era: nada ali é vinculado a
+ * uma conta, então quem entrasse depois no mesmo navegador via as análises de
+ * quem entrou antes. O servidor filtra por dono, então pedir a ele elimina a
+ * classe inteira do problema em vez de remendar caso a caso.
+ */
+export async function listJobs(limit = 50) {
+  return get<JobList>(`/v1/jobs?limit=${limit}`);
+}
+
+/** Apaga tudo que a sessão anterior deixou no navegador. */
+export function clearLocalSession() {
+  for (const chave of [
+    "legacyDocResult",
+    "legacyDocHistory",
+    "repoUrl",
+    "repoBranch",
+    "repoDepth",
+  ]) {
+    localStorage.removeItem(chave);
+  }
 }
 
 export async function listDocuments(jobId: string) {

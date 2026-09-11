@@ -1,106 +1,130 @@
 import Navbar from "../components/Navbar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { downloadArtifact } from "../services/api";
+import {
+  documentToResult,
+  downloadArtifact,
+  exportPath,
+  getAuthToken,
+  getDocument,
+  listDocuments,
+  listJobs,
+  type Job,
+} from "../services/api";
 
-type HistoryItem = {
-  id: number;
-  createdAt: string;
-  repo_url?: string;
-  file: string;
-  summary: string;
-  status: string;
-  pdf_url?: string | null;
-  markdown_url?: string | null;
-  total_functions?: number;
-  resultData?: unknown;
+const ROTULO_DE_STATUS: Record<string, string> = {
+  queued: "Na fila",
+  running: "Processando",
+  succeeded: "Concluído",
+  failed: "Falhou",
+  cancelled: "Cancelado",
 };
 
-function readHistory(): HistoryItem[] {
-  const raw = localStorage.getItem("legacyDocHistory");
+const ROTULO_DE_NIVEL: Record<string, string> = {
+  basic: "Básico",
+  standard: "Padrão",
+  pro: "Completo",
+};
 
-  if (!raw) return [];
+function classeDeStatus(status: string) {
+  if (status === "succeeded") return "status success";
+  if (status === "failed" || status === "cancelled") return "status error";
+  return "status pending";
+}
 
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+function formatarData(iso: string) {
+  const data = new Date(iso);
+  return Number.isNaN(data.valueOf()) ? iso : data.toLocaleString("pt-BR");
 }
 
 export default function Log() {
   const navigate = useNavigate();
-  const [history, setHistory] = useState<HistoryItem[]>(readHistory);
+
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  const [abrindo, setAbrindo] = useState<string | null>(null);
+
+  /**
+   * O histórico vem do servidor, e não do navegador.
+   *
+   * Ele morava em `localStorage`, o que parecia inofensivo e não era: nada ali
+   * é vinculado a uma conta, então quem entrasse depois no mesmo navegador via
+   * as análises de quem entrou antes. O servidor filtra por dono, então pedir a
+   * ele resolve a classe inteira do problema em vez de remendar caso a caso.
+   */
+  const carregar = useCallback(async () => {
+    if (!getAuthToken()) {
+      navigate("/login", { viewTransition: true });
+      return;
+    }
+
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const lista = await listJobs();
+      setJobs(lista.items);
+    } catch (error) {
+      setErro(
+        error instanceof Error ? error.message : "Não foi possível carregar o histórico."
+      );
+    } finally {
+      setCarregando(false);
+    }
+  }, [navigate]);
 
   useEffect(() => {
-    function handleUpdate() {
-      setHistory(readHistory());
-    }
+    carregar();
+  }, [carregar]);
 
-    window.addEventListener("legacydoc-history-updated", handleUpdate);
-    window.addEventListener("storage", handleUpdate);
+  /** Busca os documentos do job e abre o primeiro. */
+  async function abrirResultado(job: Job) {
+    if (abrindo) return;
 
-    return () => {
-      window.removeEventListener("legacydoc-history-updated", handleUpdate);
-      window.removeEventListener("storage", handleUpdate);
-    };
-  }, []);
-
-  function handleClearHistory() {
-    const confirmClear = confirm("Tem certeza que deseja limpar o histórico?");
-
-    if (!confirmClear) return;
-
-    localStorage.removeItem("legacyDocHistory");
-    setHistory([]);
-  }
-
-  function handleViewResult(item: HistoryItem) {
-    if (item.resultData) {
-      localStorage.setItem("legacyDocResult", JSON.stringify(item.resultData));
-    } else {
-      const fallbackResult = {
-        status: item.status || "success",
-        file: item.file,
-        summary: item.summary,
-        pdf_url: item.pdf_url || null,
-        documentation: [],
-      };
-
-      localStorage.setItem("legacyDocResult", JSON.stringify(fallbackResult));
-    }
-
-    if (item.repo_url) {
-      localStorage.setItem("repoUrl", item.repo_url);
-    }
-
-    navigate("/resultado", { viewTransition: true });
-  }
-
-  async function handleDownload(item: HistoryItem) {
-    if (!item.pdf_url) {
-      alert("PDF não disponível para este item.");
-      return;
-    }
+    setAbrindo(job.id);
 
     try {
-      await downloadArtifact(item.pdf_url, "documentacao.pdf");
+      const documentos = await listDocuments(job.id);
+
+      if (documentos.length === 0) {
+        alert("Esta análise não gerou nenhum documento.");
+        return;
+      }
+
+      const detalhe = await getDocument(documentos[0].id);
+
+      localStorage.setItem(
+        "legacyDocResult",
+        JSON.stringify(documentToResult(detalhe, documentos))
+      );
+
+      const origem = (job as Job & { params?: { repo_url?: string } }).params?.repo_url;
+      if (origem) localStorage.setItem("repoUrl", origem);
+
+      navigate("/resultado", { viewTransition: true });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Falha ao baixar o PDF.");
+      alert(error instanceof Error ? error.message : "Não foi possível abrir o resultado.");
+    } finally {
+      setAbrindo(null);
     }
   }
 
-  async function handleDownloadMD(item: HistoryItem) {
-    if (!item.markdown_url) {
-      alert("Markdown não disponível para este item.");
-      return;
-    }
-
+  async function baixar(job: Job, formato: "pdf" | "markdown") {
     try {
-      await downloadArtifact(item.markdown_url, "documentacao.md");
+      const documentos = await listDocuments(job.id);
+
+      if (documentos.length === 0) {
+        alert("Esta análise não gerou nenhum documento.");
+        return;
+      }
+
+      await downloadArtifact(
+        exportPath(documentos[0].id, formato),
+        formato === "pdf" ? "documentacao.pdf" : "documentacao.md"
+      );
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Falha ao baixar o Markdown.");
+      alert(error instanceof Error ? error.message : "Falha ao baixar o arquivo.");
     }
   }
 
@@ -115,67 +139,76 @@ export default function Log() {
           <h1>Histórico de documentações</h1>
 
           <p className="hero-subtitle">
-            Acompanhe todas as documentações geradas.
+            Todas as análises desta conta, em qualquer navegador.
           </p>
 
-          {history.length > 0 && (
-            <button className="btn btn-secondary" onClick={handleClearHistory}>
-              Limpar histórico
-            </button>
-          )}
+          <button className="btn btn-secondary" onClick={carregar} disabled={carregando}>
+            {carregando ? "Carregando..." : "Atualizar"}
+          </button>
 
           <div className="log-list">
-            {history.length === 0 ? (
+            {erro && (
+              <div className="log-item empty-history">
+                <div className="log-left">
+                  <strong>Não foi possível carregar</strong>
+                  <p>{erro}</p>
+                </div>
+              </div>
+            )}
+
+            {!erro && !carregando && jobs.length === 0 && (
               <div className="log-item empty-history">
                 <div className="log-left">
                   <strong>Nenhuma análise ainda</strong>
                   <span className="status pending">Sem registros</span>
                 </div>
               </div>
-            ) : (
-              history.map((item) => (
-                <article className="log-item" key={item.id}>
-                  <div className="log-left">
-                    <strong>{item.file}</strong>
-
-                    <span
-                      className={
-                        item.status === "success"
-                          ? "status success"
-                          : "status pending"
-                      }
-                    >
-                      {item.status === "success" ? "Concluído" : item.status}
-                    </span>
-
-                    <small>{item.createdAt}</small>
-
-                    {typeof item.total_functions === "number" && (
-                      <small>Funções: {item.total_functions}</small>
-                    )}
-
-                    <p>{item.summary}</p>
-                  </div>
-
-                  <div className="log-actions">
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => handleViewResult(item)}
-                    >
-                      Resultado
-                    </button>
-
-                    <button className="btn" onClick={() => handleDownload(item)}>
-                      PDF
-                    </button>
-
-                    <button className="btn" onClick={() => handleDownloadMD(item)}>
-                      Markdown
-                    </button>
-                  </div>
-                </article>
-              ))
             )}
+
+            {jobs.map((job) => (
+              <article className="log-item" key={job.id}>
+                <div className="log-left">
+                  <strong className="mono">
+                    {job.document_count} arquivo(s) documentado(s)
+                  </strong>
+
+                  <span className={classeDeStatus(job.status)}>
+                    {ROTULO_DE_STATUS[job.status] ?? job.status}
+                  </span>
+
+                  <small>{formatarData(job.created_at)}</small>
+                  <small>Nível: {ROTULO_DE_NIVEL[job.depth] ?? job.depth}</small>
+
+                  {job.error_message && <p>{job.error_message}</p>}
+                </div>
+
+                <div className="log-actions">
+                  <button
+                    className="btn btn-secondary"
+                    disabled={job.document_count === 0 || abrindo === job.id}
+                    onClick={() => abrirResultado(job)}
+                  >
+                    {abrindo === job.id ? "Abrindo..." : "Resultado"}
+                  </button>
+
+                  <button
+                    className="btn"
+                    disabled={job.document_count === 0}
+                    onClick={() => baixar(job, "pdf")}
+                  >
+                    PDF
+                  </button>
+
+                  <button
+                    className="btn"
+                    disabled={job.document_count === 0}
+                    onClick={() => baixar(job, "markdown")}
+                  >
+                    Markdown
+                  </button>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
       </main>

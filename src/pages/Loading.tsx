@@ -3,19 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { runRepositoryJob, type Job } from "../services/api";
 
-function readHistory() {
-  const rawHistory = localStorage.getItem("legacyDocHistory");
-
-  if (!rawHistory) return [];
-
-  try {
-    const parsed = JSON.parse(rawHistory);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
 export default function Loading() {
   const navigate = useNavigate();
   const hasStarted = useRef(false);
@@ -48,34 +35,11 @@ export default function Loading() {
       try {
         const data = await runRepositoryJob({ repoUrl, branch, depth }, acompanhar);
 
+        // Guarda so o resultado aberto agora, para a proxima tela nao ter de
+        // buscar de novo. O historico nao e escrito aqui: ele vive no
+        // servidor, vinculado a conta, e uma copia local dele voltaria a
+        // aparecer para quem entrasse depois neste mesmo navegador.
         localStorage.setItem("legacyDocResult", JSON.stringify(data));
-
-        const functions = data.documentation ?? [];
-
-        const newItem = {
-          id: Date.now(),
-          createdAt: new Date().toLocaleString("pt-BR"),
-          repo_url: repoUrl,
-          file: data.file || "Repositorio analisado",
-          summary:
-            data.summary ||
-            functions[0]?.summary ||
-            "Documentação gerada com sucesso.",
-          status: data.status || "success",
-          pdf_url: data.pdf_url || null,
-          markdown_url: data.markdown_url || null,
-          total_functions: functions.length,
-          total_files: data.documents?.length ?? 1,
-          depth: data.depth,
-          resultData: data,
-        };
-
-        localStorage.setItem(
-          "legacyDocHistory",
-          JSON.stringify([newItem, ...readHistory()])
-        );
-
-        window.dispatchEvent(new Event("legacydoc-history-updated"));
 
         navigate("/resultado", { viewTransition: true });
       } catch (error) {
