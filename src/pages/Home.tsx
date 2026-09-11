@@ -17,6 +17,9 @@ type DepthInfo = {
  * precisa compara-la, e a diferenca e de custo: o nivel completo sai por
  * quase dez vezes o basico. Quem escolhe no escuro descobre na fatura.
  */
+/** Ordem fixa, do mais raso ao mais profundo. */
+const TODOS_OS_NIVEIS = ["basic", "standard", "pro"] as const;
+
 const DEPTH_INFO: Record<string, DepthInfo> = {
   basic: {
     title: "Básico",
@@ -35,6 +38,22 @@ const DEPTH_INFO: Record<string, DepthInfo> = {
   },
 };
 
+/** Cadeado. Inline para nao depender de fonte de icone nem de outra
+ *  requisicao so para desenhar uma tranca. */
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" aria-hidden="true">
+      <rect x="5" y="10.5" width="14" height="9.5" rx="2.2" fill="currentColor" />
+      <path
+        d="M8 10.5V7.5a4 4 0 0 1 8 0v3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export default function Home() {
 
   const navigate = useNavigate();
@@ -44,6 +63,15 @@ export default function Home() {
   const [account, setAccount] = useState<CurrentUser | null>(null);
   const campoRepo = useRef<HTMLInputElement>(null);
 
+  /**
+   * Nível travado que a pessoa clicou para ver como é.
+   *
+   * Separado de `depth` de propósito: espiar muda o visual, não muda o que
+   * será enviado. Misturar os dois deixaria o botão de analisar prometendo
+   * uma análise que o plano não cobre.
+   */
+  const [espiando, setEspiando] = useState<string | null>(null);
+
   // Reobserva quando a conta carrega: os cartoes de profundidade so
   // existem depois que a API responde qual e o plano.
   useRevelar([account?.id]);
@@ -51,15 +79,17 @@ export default function Home() {
   // O modo Pro veste a pagina inteira, barra de navegacao incluida. Metade
   // da tela mudando de cor e a outra metade nao pareceria defeito, nao
   // recompensa. Sai ao deixar a tela, senao a cor vaza para as outras.
+  const modoPro = espiando === "pro" || (espiando === null && depth === "pro");
+
   useEffect(() => {
-    if (depth !== "pro") return;
+    if (!modoPro) return;
 
     document.body.dataset.modo = "pro";
 
     return () => {
       delete document.body.dataset.modo;
     };
-  }, [depth]);
+  }, [modoPro]);
 
   // Atalho "/" para cair no campo, como GitHub, Slack e todo editor.
   // Quem usa a ferramenta passa o dia no teclado; obrigar a pegar o
@@ -179,13 +209,15 @@ export default function Home() {
             </div>
           )}
 
-          {account && depths.length > 0 && (
+          {account && (
             <fieldset className="depth-options" data-revelar>
               <legend className="sr-only">Profundidade da análise</legend>
 
-              {depths.map((item) => {
+              {TODOS_OS_NIVEIS.map((item) => {
                 const info = DEPTH_INFO[item];
-                const selecionado = depth === item;
+                const liberado = depths.includes(item);
+                const selecionado = liberado && depth === item && espiando === null;
+                const espiado = espiando === item;
                 const ehPro = item === "pro";
 
                 const cartao = (
@@ -193,22 +225,48 @@ export default function Home() {
                     type="button"
                     className="depth-card"
                     data-modo={ehPro ? "pro" : undefined}
+                    data-travado={liberado ? undefined : "sim"}
                     aria-pressed={selecionado}
-                    onClick={() => setDepth(item)}
+                    // Travado nao e desabilitado: o cartao continua clicavel
+                    // e focavel, porque clicar nele e justamente o que mostra
+                    // o que a pessoa ganharia. `aria-disabled` avisa o leitor
+                    // de tela que aquilo nao e uma escolha valida.
+                    aria-disabled={liberado ? undefined : true}
+                    onClick={() => {
+                      if (liberado) {
+                        setEspiando(null);
+                        setDepth(item);
+                        return;
+                      }
+
+                      setEspiando(espiado ? null : item);
+                    }}
                   >
                     <span className="depth-card-title">
                       {info?.title ?? item}
                       {ehPro && <span className="pro-badge">Pro</span>}
+                      {!liberado && (
+                        <span className="depth-lock" aria-hidden="true">
+                          <LockIcon />
+                        </span>
+                      )}
                     </span>
+
                     <span className="depth-card-note">{info?.note}</span>
                     <span className="depth-card-cost">{info?.cost}</span>
+
+                    {!liberado && (
+                      <span className="depth-card-trava">
+                        {espiado ? "Fechar demonstração" : "Incluído no plano Pro"}
+                      </span>
+                    )}
                   </button>
                 );
 
-                // A moldura girando so envolve o degrau mais profundo quando
-                // ele esta escolhido. Fora disso o cartao fica igual aos
-                // outros, senao a animacao compete com a leitura das opcoes.
-                return ehPro && selecionado ? (
+                // A moldura girando envolve o nivel mais profundo quando ele
+                // esta escolhido ou sendo espiado. Fora disso o cartao fica
+                // igual aos outros: animar sempre compete com a leitura.
+                return ehPro && (selecionado || espiado) ? (
                   <div className="pro-frame" key={item}>
                     {cartao}
                   </div>
@@ -217,6 +275,14 @@ export default function Home() {
                 );
               })}
             </fieldset>
+          )}
+
+          {espiando && (
+            <div className="espiada-aviso" role="status">
+              <strong>Você está vendo como fica o nível {DEPTH_INFO[espiando]?.title}.</strong>{" "}
+              Seu plano {account?.plan.display_name} cobre até{" "}
+              {DEPTH_INFO[account.plan.max_depth]?.title}. A análise vai rodar nesse nível.
+            </div>
           )}
 
           {account && (
