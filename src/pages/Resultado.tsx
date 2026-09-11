@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import logo from "../assets/logo.png";
 import {
+  type FindingItem,
   documentToResult,
   downloadArtifact,
   getDocument,
@@ -40,8 +41,39 @@ type ApiResponse = {
   markdown_url?: string;
   documents?: DocumentSummary[];
   depth?: string;
+  findings?: FindingItem[];
   findings_locked?: boolean;
 };
+
+/** As severidades da API mapeadas nas tres faixas visuais da tela. */
+const ROTULO_DE_SEVERIDADE: Record<string, string> = {
+  critical: "Crítico",
+  high: "Alto",
+  medium: "Médio",
+  low: "Baixo",
+  info: "Info",
+};
+
+function classeDeSeveridade(severidade: string) {
+  if (severidade === "critical" || severidade === "high") return "high";
+  if (severidade === "medium") return "medium";
+  return "low";
+}
+
+/** Cadeado. Inline para nao depender de fonte de icone. */
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
+      <rect x="5" y="10.5" width="14" height="9.5" rx="2.2" fill="currentColor" />
+      <path
+        d="M8 10.5V7.5a4 4 0 0 1 8 0v3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 function getRepoName(repoUrl: string | null) {
   if (!repoUrl) return "Repositório não informado";
@@ -144,6 +176,21 @@ export default function Resultado() {
     firstFunction?.summary ||
     "Documentação gerada automaticamente com base na análise do repositório.";
 
+  const findings = result?.findings ?? [];
+
+  /**
+   * Duas razoes diferentes para nao haver pontos, e a tela precisa dizer qual.
+   *
+   * Ou a analise rodou num nivel que nem procura melhorias, ou ela achou e o
+   * plano nao libera ver. A segunda e reversivel na hora, sem reprocessar e
+   * sem cobrar de novo, e isso muda o que vale escrever para a pessoa.
+   */
+  const bloqueadosPeloPlano = Boolean(result?.findings_locked);
+
+  // Roxo so quando o documento foi auditado. Um relatorio do nivel mais raso
+  // fica azul, e a diferenca se reconhece sem legenda.
+  const modoDoRelatorio = result?.depth === "pro" ? "pro" : undefined;
+
   const repoName = getRepoName(repoUrl);
   const language = getLanguageByFile(fileName);
   const stack = getStackByLanguage(language);
@@ -225,7 +272,7 @@ export default function Resultado() {
       <main
         id="conteudo"
         className="result-page"
-        data-modo={result.depth === "pro" ? "pro" : undefined}
+        data-modo={modoDoRelatorio}
       >
         {/* Documento auditado veste a cor do Pro. Quem abre um relatorio do
             nivel mais raso ve azul e reconhece a diferenca sem legenda. */}
@@ -462,40 +509,58 @@ status: ${result.status || "success"}`}
               </div>
             </div>
 
-            <div className="improvements-card">
+            <div className="improvements-card" data-modo={modoDoRelatorio}>
               <div className="section-heading">
                 <span>⚠</span>
-                <h2>Avisos e melhorias</h2>
+                <h2>Pontos de melhoria</h2>
               </div>
 
-              <div className="improvement-list">
-                <div className="improvement-item high">
-                  <strong>Documentação automatizada</strong>
-                  <p>
-                    Revise os textos gerados para ajustar termos específicos do
-                    projeto.
-                  </p>
-                  <span>Médio</span>
-                </div>
+              {findings.length > 0 ? (
+                <div className="improvement-list">
+                  {findings.map((ponto) => (
+                    <div
+                      key={ponto.id}
+                      className={`improvement-item ${classeDeSeveridade(ponto.severity)}`}
+                    >
+                      <strong>{ponto.title}</strong>
+                      <p>{ponto.detail}</p>
 
-                <div className="improvement-item medium">
-                  <strong>Funções com parâmetros</strong>
-                  <p>
-                    {functionsWithArgs} função(ões) possuem argumentos e podem
-                    exigir explicação mais detalhada.
-                  </p>
-                  <span>Info</span>
-                </div>
+                      {ponto.suggestion && (
+                        <p className="improvement-suggestion">{ponto.suggestion}</p>
+                      )}
 
-                <div className="improvement-item low">
-                  <strong>Boas práticas</strong>
-                  <p>
-                    A documentação criada pode servir como base para manutenção
-                    e onboarding técnico.
-                  </p>
-                  <span>Ok</span>
+                      {ponto.symbol_name && (
+                        <span className="improvement-local mono">
+                          {ponto.symbol_name}
+                          {ponto.line_start ? `:${ponto.line_start}` : ""}
+                        </span>
+                      )}
+
+                      <span>{ROTULO_DE_SEVERIDADE[ponto.severity] ?? ponto.severity}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="melhorias-travadas" data-modo="pro">
+                  <span className="depth-lock" aria-hidden="true">
+                    <LockIcon />
+                  </span>
+
+                  <strong>
+                    {bloqueadosPeloPlano
+                      ? "Esta análise encontrou pontos de melhoria"
+                      : "Este nível não procura pontos de melhoria"}
+                  </strong>
+
+                  <p>
+                    {bloqueadosPeloPlano
+                      ? "Eles já estão gravados e aparecem assim que o plano cobrir. Nada será reprocessado nem cobrado de novo."
+                      : "Os níveis Padrão e Completo apontam risco, complexidade e code smell em cada função, com o trecho exato onde está."}
+                  </p>
+
+                  <span className="pro-badge">Incluído no Pro</span>
+                </div>
+              )}
             </div>
 
             <div className="modules-card">

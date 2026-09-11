@@ -2297,3 +2297,60 @@ body[data-modo="pro"] .home-page::after {
 .espiada-aviso strong {
   color: var(--primary-text);
 }
+
+/* =========================================================
+   27. PONTOS DE MELHORIA NO RELATORIO
+========================================================= */
+
+.improvement-suggestion {
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--brand-300);
+  color: var(--paper-muted);
+  font-style: italic;
+}
+
+.improvement-local {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 8px;
+
+  border-radius: 6px;
+  background: var(--paper-tint);
+  color: var(--paper-ink);
+  font-size: 0.78rem;
+}
+
+/* Bloco de convite quando nao ha pontos para mostrar.
+   Veste a cor do Pro mesmo dentro de um relatorio azul: e o unico
+   lugar da tela que fala do que a pessoa ainda nao tem, e o contraste
+   com o resto do documento e o que faz ele ser notado. */
+.melhorias-travadas {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+
+  margin-top: 14px;
+  padding: 22px;
+
+  border: 1px dashed var(--brand-300);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--brand-50), transparent 70%);
+}
+
+.melhorias-travadas .depth-lock {
+  color: var(--brand-600);
+}
+
+.melhorias-travadas strong {
+  font-size: 1rem;
+  color: var(--paper-text);
+}
+
+.melhorias-travadas p {
+  margin: 0;
+  color: var(--paper-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
