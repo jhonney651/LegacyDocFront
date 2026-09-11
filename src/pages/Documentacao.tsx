@@ -6,7 +6,7 @@ export default function Documentacao() {
     <>
       <Navbar />
 
-      <main className="main-screen">
+      <main id="conteudo" className="main-screen">
         <section className="hero">
 
           <h1>Gerando documentação...</h1>

@@ -37,6 +37,11 @@ export default function Navbar() {
   }
 
   return (
+    <>
+      <a className="skip-link" href="#conteudo">
+        Pular para o conteúdo
+      </a>
+
     <header className="topbar">
       <Link to="/" className="logo-link">
         <img src={logo} alt="Legacy Doc" className="logo-img" />
@@ -62,5 +67,6 @@ export default function Navbar() {
         </button>
       </nav>
     </header>
+    </>
   );
 }

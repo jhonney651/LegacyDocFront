@@ -3,10 +3,35 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAuthToken, getCurrentUser, type CurrentUser } from "../services/api";
 
-const DEPTH_LABELS: Record<string, string> = {
-  basic: "Basico — documenta o codigo",
-  standard: "Padrao — soma os pontos de melhoria",
-  pro: "Completo — soma a auditoria de fidelidade",
+type DepthInfo = {
+  title: string;
+  note: string;
+  cost: string;
+};
+
+/**
+ * O que cada degrau entrega, em vez de so o nome dele.
+ *
+ * Um <select> escondia a diferenca justamente no momento em que a pessoa
+ * precisa compara-la, e a diferenca e de custo: o nivel completo sai por
+ * quase dez vezes o basico. Quem escolhe no escuro descobre na fatura.
+ */
+const DEPTH_INFO: Record<string, DepthInfo> = {
+  basic: {
+    title: "Básico",
+    note: "Documenta cada função, classe e método do repositório.",
+    cost: "~US$ 0,002 por arquivo",
+  },
+  standard: {
+    title: "Padrão",
+    note: "Soma os pontos de melhoria: risco, complexidade e code smell.",
+    cost: "~US$ 0,009 por arquivo",
+  },
+  pro: {
+    title: "Completo",
+    note: "Soma a auditoria que confere a documentação contra o código.",
+    cost: "~US$ 0,023 por arquivo",
+  },
 };
 
 export default function Home() {
@@ -56,7 +81,7 @@ export default function Home() {
     <>
       <Navbar />
 
-      <main className="home-page">
+      <main id="conteudo" className="home-page">
         <div className="home-overlay"></div>
 
         <section className="home-hero">
@@ -86,43 +111,66 @@ export default function Home() {
           </div>
 
           {account && (
-            <div
-              style={{
-                display: "flex",
-                gap: "0.75rem",
-                flexWrap: "wrap",
-                justifyContent: "center",
-                marginTop: "1rem",
-              }}
-            >
+            <div className="home-branch">
+              <label htmlFor="branch">Branch</label>
+
               <input
+                id="branch"
                 type="text"
-                aria-label="Branch"
-                placeholder="Branch (opcional)"
+                placeholder="Deixe vazio para usar a padrão"
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
-                style={{ padding: "0.6rem 0.9rem", borderRadius: 8, minWidth: 180 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAnalyze();
+                }}
               />
-
-              <select
-                aria-label="Profundidade da analise"
-                value={depth}
-                onChange={(e) => setDepth(e.target.value)}
-                style={{ padding: "0.6rem 0.9rem", borderRadius: 8, minWidth: 320 }}
-              >
-                {depths.map((item) => (
-                  <option key={item} value={item}>
-                    {DEPTH_LABELS[item] ?? item}
-                  </option>
-                ))}
-              </select>
             </div>
           )}
 
+          {account && depths.length > 0 && (
+            <fieldset className="depth-options">
+              <legend className="sr-only">Profundidade da análise</legend>
+
+              {depths.map((item) => {
+                const info = DEPTH_INFO[item];
+                const selecionado = depth === item;
+                const ehPro = item === "pro";
+
+                const cartao = (
+                  <button
+                    type="button"
+                    className="depth-card"
+                    aria-pressed={selecionado}
+                    onClick={() => setDepth(item)}
+                  >
+                    <span className="depth-card-title">
+                      {info?.title ?? item}
+                      {ehPro && <span className="pro-badge">Pro</span>}
+                    </span>
+                    <span className="depth-card-note">{info?.note}</span>
+                    <span className="depth-card-cost">{info?.cost}</span>
+                  </button>
+                );
+
+                // A moldura girando so envolve o degrau mais profundo, e so
+                // quando ele esta escolhido: animar o tempo todo compete com
+                // a leitura das outras opcoes.
+                return ehPro && selecionado ? (
+                  <div className="pro-frame" key={item}>
+                    {cartao}
+                  </div>
+                ) : (
+                  <div key={item}>{cartao}</div>
+                );
+              })}
+            </fieldset>
+          )}
+
           {account && (
-            <p style={{ marginTop: "0.75rem", opacity: 0.75, fontSize: "0.9rem" }}>
-              Plano {account.plan.display_name} · até {account.plan.max_files_per_job} arquivos
-              por análise · restam US$ {remaining?.toFixed(2)} neste mês
+            <p className="home-quota">
+              Plano <strong>{account.plan.display_name}</strong> · até{" "}
+              {account.plan.max_files_per_job} arquivos por análise · restam{" "}
+              <strong>US$ {remaining?.toFixed(2)}</strong> neste mês
             </p>
           )}
         </section>

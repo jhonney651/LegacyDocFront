@@ -36,7 +36,7 @@ export default function Login() {
     <>
       <Navbar />
 
-      <main className="main-screen">
+      <main id="conteudo" className="main-screen">
         <section className="hero">
           <h1>Entrar</h1>
           <p className="hero-subtitle">Acesse sua conta para continuar</p>

@@ -43,7 +43,7 @@ export default function CriarConta() {
     <>
       <Navbar />
 
-      <main className="main-screen">
+      <main id="conteudo" className="main-screen">
         <section className="hero">
           <span className="badge">Cadastro</span>
 

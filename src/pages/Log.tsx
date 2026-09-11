@@ -108,7 +108,7 @@ export default function Log() {
     <>
       <Navbar />
 
-      <main className="main-screen">
+      <main id="conteudo" className="main-screen">
         <section className="hero">
           <span className="badge">Histórico</span>
 

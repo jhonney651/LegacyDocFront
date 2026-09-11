@@ -23,7 +23,7 @@ export default function Loading() {
   // O worker informa o que esta fazendo a cada arquivo. Mostrar isso e a
   // diferenca entre uma espera de minutos que parece travada e uma que nao.
   const [percent, setPercent] = useState(0);
-  const [message, setMessage] = useState("Enfileirando o repositorio...");
+  const [message, setMessage] = useState("Enfileirando o repositório...");
 
   useEffect(() => {
     async function gerarAnalise() {
@@ -35,7 +35,7 @@ export default function Loading() {
       const depth = localStorage.getItem("repoDepth");
 
       if (!repoUrl) {
-        alert("Nenhum repositorio informado.");
+        alert("Nenhum repositório informado.");
         navigate("/");
         return;
       }
@@ -60,7 +60,7 @@ export default function Loading() {
           summary:
             data.summary ||
             functions[0]?.summary ||
-            "Documentacao gerada com sucesso.",
+            "Documentação gerada com sucesso.",
           status: data.status || "success",
           pdf_url: data.pdf_url || null,
           markdown_url: data.markdown_url || null,
@@ -80,7 +80,7 @@ export default function Loading() {
         navigate("/resultado");
       } catch (error) {
         console.error("Erro ao gerar documentacao:", error);
-        alert(error instanceof Error ? error.message : "Erro ao gerar documentacao.");
+        alert(error instanceof Error ? error.message : "Erro ao gerar documentação.");
         navigate("/");
       }
     }
@@ -92,11 +92,11 @@ export default function Loading() {
     <>
       <Navbar />
 
-      <main className="main-screen">
+      <main id="conteudo" className="main-screen">
         <section className="hero">
           <span className="badge">Processando</span>
 
-          <h1>Gerando documentacao...</h1>
+          <h1>Gerando documentação...</h1>
 
           <p className="hero-subtitle">{message}</p>
 

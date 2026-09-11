@@ -38,6 +38,8 @@ type ApiResponse = {
   pdf_url?: string;
   markdown_url?: string;
   documents?: DocumentSummary[];
+  depth?: string;
+  findings_locked?: boolean;
 };
 
 function getRepoName(repoUrl: string | null) {
@@ -113,7 +115,7 @@ export default function Resultado() {
       setResult(next);
       localStorage.setItem("legacyDocResult", JSON.stringify(next));
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Nao foi possivel abrir o arquivo.");
+      alert(error instanceof Error ? error.message : "Não foi possível abrir o arquivo.");
     } finally {
       setLoadingFile(null);
     }
@@ -191,7 +193,7 @@ export default function Resultado() {
       <>
         <Navbar />
 
-        <main className="main-screen">
+        <main id="conteudo" className="main-screen">
           <section className="hero">
             <span className="badge">Sem resultado</span>
 
@@ -214,7 +216,7 @@ export default function Resultado() {
     <>
       <Navbar />
 
-      <main className="result-page">
+      <main id="conteudo" className="result-page">
         <section className="report-paper">
           <header className="report-header">
             <div className="report-brand">
@@ -229,7 +231,16 @@ export default function Resultado() {
 
           <section className="report-hero">
             <div className="report-title-block">
-              <span className="report-kicker">DOCUMENTAÇÃO TÉCNICA</span>
+              <div className="report-kicker-row">
+                <span className="report-kicker">DOCUMENTAÇÃO TÉCNICA</span>
+
+                {/* O selo diz com que profundidade este documento foi feito.
+                    Sem isso, dois relatorios de custo muito diferente ficam
+                    indistinguiveis depois de baixados. */}
+                {result.depth === "pro" && (
+                  <span className="pro-badge">Auditado</span>
+                )}
+              </div>
 
               <h1>Documentação Técnica Automatizada</h1>
 
@@ -333,7 +344,7 @@ export default function Resultado() {
                       >
                         <strong>{item.path.split("/").pop()}</strong>
                         <span style={{ opacity: 0.65, marginLeft: 8 }}>
-                          {item.symbol_count} simbolos
+                          {item.symbol_count} símbolos
                           {item.finding_count > 0 && ` · ${item.finding_count} pontos`}
                         </span>
                         {loadingFile === item.path && <span> · abrindo...</span>}

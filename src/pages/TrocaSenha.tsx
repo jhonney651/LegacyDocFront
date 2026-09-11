@@ -39,7 +39,7 @@ export default function TrocaSenha() {
       <>
         <Navbar />
 
-        <main className="main-screen">
+        <main id="conteudo" className="main-screen">
           <section className="hero">
             <span className="badge">Recuperação de acesso</span>
 
@@ -82,7 +82,7 @@ export default function TrocaSenha() {
     <>
       <Navbar />
 
-      <main className="main-screen">
+      <main id="conteudo" className="main-screen">
         <section className="hero">
           <span className="badge">Recuperação de acesso</span>
 
