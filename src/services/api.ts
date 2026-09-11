@@ -323,12 +323,32 @@ function toFunctionItems(symbols: SymbolDoc[]): FunctionItem[] {
   }));
 }
 
+/** Empacota um documento no formato que a tela de resultado desenha. */
+export function documentToResult(
+  detail: DocumentDetail,
+  documents: DocumentSummary[]
+): GenerateResponse {
+  return {
+    status: "success",
+    file: detail.path,
+    summary: detail.summary ?? undefined,
+    documentation: toFunctionItems(detail.symbols),
+    findings: detail.findings,
+    findings_locked: detail.findings_locked,
+    depth: detail.depth,
+    documents,
+    pdf_url: exportPath(detail.id, "pdf"),
+    markdown_url: exportPath(detail.id, "markdown"),
+    json_url: exportPath(detail.id, "json"),
+  };
+}
+
 /**
- * Fluxo completo: enfileira, acompanha e devolve o primeiro documento pronto.
+ * Fluxo completo: enfileira, acompanha e devolve o job pronto.
  *
- * O job pode render varios documentos, um por arquivo. A lista completa vai em
- * `documents` para a tela oferecer a navegacao; `documentation` traz o primeiro
- * para manter o que a tela de resultado ja mostrava.
+ * Um job rende um documento por arquivo. A lista inteira vai em `documents`,
+ * que e por onde a tela troca de arquivo; os demais campos trazem o primeiro
+ * ja aberto, para a tela ter o que mostrar sem uma segunda espera.
  */
 export async function runRepositoryJob(
   params: {
@@ -357,21 +377,7 @@ export async function runRepositoryJob(
     );
   }
 
-  const detail = await getDocument(documents[0].id);
-
-  return {
-    status: "success",
-    file: detail.path,
-    summary: detail.summary ?? undefined,
-    documentation: toFunctionItems(detail.symbols),
-    findings: detail.findings,
-    findings_locked: detail.findings_locked,
-    depth: detail.depth,
-    documents,
-    pdf_url: exportPath(detail.id, "pdf"),
-    markdown_url: exportPath(detail.id, "markdown"),
-    json_url: exportPath(detail.id, "json"),
-  };
+  return documentToResult(await getDocument(documents[0].id), documents);
 }
 
 export function resolveBackendUrl(path?: string | null) {

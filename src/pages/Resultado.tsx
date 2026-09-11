@@ -1,7 +1,13 @@
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import logo from "../assets/logo.png";
-import { downloadArtifact } from "../services/api";
+import {
+  documentToResult,
+  downloadArtifact,
+  getDocument,
+  type DocumentSummary,
+} from "../services/api";
 
 type FunctionArg = {
   name: string;
@@ -31,6 +37,7 @@ type ApiResponse = {
   documentation?: FunctionItem[] | DocumentationObject;
   pdf_url?: string;
   markdown_url?: string;
+  documents?: DocumentSummary[];
 };
 
 function getRepoName(repoUrl: string | null) {
@@ -84,7 +91,33 @@ export default function Resultado() {
   const raw = localStorage.getItem("legacyDocResult");
   const repoUrl = localStorage.getItem("repoUrl");
 
-  const result: ApiResponse | null = raw ? JSON.parse(raw) : null;
+  // Um job rende um documento por arquivo. A tela abre no primeiro e troca sob
+  // demanda, em vez de baixar os catorze de uma vez: o payload completo de um
+  // repositorio medio nao cabe confortavelmente em localStorage.
+  const [result, setResult] = useState<ApiResponse | null>(() =>
+    raw ? JSON.parse(raw) : null
+  );
+  const [loadingFile, setLoadingFile] = useState<string | null>(null);
+
+  const documents = result?.documents ?? [];
+
+  async function abrirArquivo(item: DocumentSummary) {
+    if (loadingFile || item.path === result?.file) return;
+
+    setLoadingFile(item.path);
+
+    try {
+      const detail = await getDocument(item.id);
+      const next = documentToResult(detail, documents);
+
+      setResult(next);
+      localStorage.setItem("legacyDocResult", JSON.stringify(next));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Nao foi possivel abrir o arquivo.");
+    } finally {
+      setLoadingFile(null);
+    }
+  }
 
   const functions: FunctionItem[] = Array.isArray(result?.documentation)
     ? result.documentation
@@ -254,6 +287,63 @@ export default function Resultado() {
               </div>
             </aside>
           </section>
+
+          {documents.length > 1 && (
+            <>
+              <div className="report-divider"></div>
+
+              <section>
+                <div className="section-heading">
+                  <span>☰</span>
+                  <h2>
+                    Arquivos analisados ({documents.length})
+                  </h2>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "0.5rem",
+                    marginTop: "0.75rem",
+                  }}
+                >
+                  {documents.map((item) => {
+                    const atual = item.path === fileName;
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => abrirArquivo(item)}
+                        disabled={loadingFile !== null}
+                        title={item.path}
+                        style={{
+                          padding: "0.5rem 0.8rem",
+                          borderRadius: 8,
+                          border: atual
+                            ? "1px solid #22c55e"
+                            : "1px solid rgba(128,128,128,0.35)",
+                          background: atual ? "rgba(34,197,94,0.12)" : "transparent",
+                          cursor: loadingFile ? "wait" : "pointer",
+                          fontSize: "0.85rem",
+                          textAlign: "left",
+                          opacity: loadingFile && loadingFile !== item.path ? 0.5 : 1,
+                        }}
+                      >
+                        <strong>{item.path.split("/").pop()}</strong>
+                        <span style={{ opacity: 0.65, marginLeft: 8 }}>
+                          {item.symbol_count} simbolos
+                          {item.finding_count > 0 && ` · ${item.finding_count} pontos`}
+                        </span>
+                        {loadingFile === item.path && <span> · abrindo...</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            </>
+          )}
 
           <div className="report-divider"></div>
 
