@@ -53,30 +53,62 @@ export default function Log() {
    * as análises de quem entrou antes. O servidor filtra por dono, então pedir a
    * ele resolve a classe inteira do problema em vez de remendar caso a caso.
    */
-  const carregar = useCallback(async () => {
-    if (!getAuthToken()) {
-      navigate("/login", { viewTransition: true });
-      return;
-    }
+  /**
+   * Busca a lista e entrega o resultado por callback, em vez de mexer no
+   * estado por conta propria.
+   *
+   * Quem chama decide o que fazer, e isso importa: chamada a partir de um
+   * efeito, uma funcao que muda estado de forma sincrona provoca render em
+   * cascata. Aqui o estado so muda dentro do callback, depois da resposta.
+   */
+  const buscar = useCallback(
+    (aplicar: (lista: Job[] | null, erro: string | null) => void) => {
+      if (!getAuthToken()) {
+        navigate("/login", { viewTransition: true });
+        return;
+      }
 
-    setCarregando(true);
-    setErro(null);
-
-    try {
-      const lista = await listJobs();
-      setJobs(lista.items);
-    } catch (error) {
-      setErro(
-        error instanceof Error ? error.message : "Não foi possível carregar o histórico."
-      );
-    } finally {
-      setCarregando(false);
-    }
-  }, [navigate]);
+      listJobs()
+        .then((lista) => aplicar(lista.items, null))
+        .catch((erro: unknown) =>
+          aplicar(
+            null,
+            erro instanceof Error ? erro.message : "Não foi possível carregar o histórico."
+          )
+        );
+    },
+    [navigate]
+  );
 
   useEffect(() => {
-    carregar();
-  }, [carregar]);
+    // Guarda de desmontagem: sair da tela antes de a resposta chegar nao pode
+    // tentar escrever num componente que ja saiu.
+    let ativo = true;
+
+    buscar((lista, falha) => {
+      if (!ativo) return;
+
+      if (lista) setJobs(lista);
+      setErro(falha);
+      setCarregando(false);
+    });
+
+    return () => {
+      ativo = false;
+    };
+  }, [buscar]);
+
+  /** Recarrega a pedido. O indicador liga aqui porque isto sai de um clique,
+   *  e nao de um efeito. */
+  function atualizar() {
+    setCarregando(true);
+
+    buscar((lista, falha) => {
+      if (lista) setJobs(lista);
+      setErro(falha);
+      setCarregando(false);
+    });
+  }
 
   /** Busca os documentos do job e abre o primeiro. */
   async function abrirResultado(job: Job) {
@@ -99,8 +131,9 @@ export default function Log() {
         JSON.stringify(documentToResult(detalhe, documentos))
       );
 
-      const origem = (job as Job & { params?: { repo_url?: string } }).params?.repo_url;
-      if (origem) localStorage.setItem("repoUrl", origem);
+      // `repoUrl` e reescrito sempre, nunca so quando ha valor: deixar o
+      // anterior faria o relatorio mostrar a origem de outra analise.
+      localStorage.setItem("repoUrl", job.source ?? "");
 
       navigate("/resultado", { viewTransition: true });
     } catch (error) {
@@ -142,7 +175,7 @@ export default function Log() {
             Todas as análises desta conta, em qualquer navegador.
           </p>
 
-          <button className="btn btn-secondary" onClick={carregar} disabled={carregando}>
+          <button className="btn btn-secondary" onClick={atualizar} disabled={carregando}>
             {carregando ? "Carregando..." : "Atualizar"}
           </button>
 
@@ -168,8 +201,8 @@ export default function Log() {
             {jobs.map((job) => (
               <article className="log-item" key={job.id}>
                 <div className="log-left">
-                  <strong className="mono">
-                    {job.document_count} arquivo(s) documentado(s)
+                  <strong className="file-path">
+                    {job.source ?? "Análise sem origem registrada"}
                   </strong>
 
                   <span className={classeDeStatus(job.status)}>
@@ -177,7 +210,10 @@ export default function Log() {
                   </span>
 
                   <small>{formatarData(job.created_at)}</small>
-                  <small>Nível: {ROTULO_DE_NIVEL[job.depth] ?? job.depth}</small>
+                  <small>
+                    Nível: {ROTULO_DE_NIVEL[job.depth] ?? job.depth} ·{" "}
+                    {job.document_count} arquivo(s)
+                  </small>
 
                   {job.error_message && <p>{job.error_message}</p>}
                 </div>

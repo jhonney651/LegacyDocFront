@@ -92,6 +92,9 @@ export type Job = {
   created_at: string;
   started_at: string | null;
   finished_at: string | null;
+
+  /** O que foi analisado: URL do repositório, nome do .zip ou caminho. */
+  source: string | null;
 };
 
 export type JobList = {
