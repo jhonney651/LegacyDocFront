@@ -69,6 +69,15 @@ export type CurrentUser = {
   plan: PlanInfo;
   jobs_used_this_month: number;
   spent_this_month_usd: number;
+
+  /**
+   * Se esta conta abre o painel.
+   *
+   * Serve para não oferecer uma porta que a pessoa vai bater e receber 404.
+   * Esconder o link não é controle de acesso: o painel recusa por conta
+   * própria quem não for administrador.
+   */
+  is_admin: boolean;
 };
 
 export type JobStatus =
@@ -427,6 +436,77 @@ export async function runRepositoryJob(
   }
 
   return documentToResult(await getDocument(documents[0].id), documents);
+}
+
+// ----------------------------------------------------------------- painel
+
+export type AdminAccount = {
+  id: string;
+  email: string;
+  display_name: string | null;
+  plan_tier: string;
+  is_active: boolean;
+  is_admin: boolean;
+  created_at: string;
+
+  jobs_this_month: number;
+  spent_this_month_usd: number;
+  cost_limit_usd: number;
+  documents_total: number;
+  last_job_at: string | null;
+  locked_until: string | null;
+};
+
+export type AdminAccountList = {
+  items: AdminAccount[];
+  total: number;
+};
+
+export type AdminAction = {
+  id: string;
+  actor_email: string;
+  target_email: string;
+  action: string;
+  value_before: string | null;
+  value_after: string | null;
+  reason: string;
+  created_at: string;
+};
+
+export async function listAccounts(search = "", limit = 50) {
+  const busca = search.trim() ? `&search=${encodeURIComponent(search.trim())}` : "";
+
+  return get<AdminAccountList>(`/v1/admin/accounts?limit=${limit}${busca}`);
+}
+
+async function patch<T>(path: string, body: unknown): Promise<T> {
+  return handleResponse<T>(
+    await fetch(`${API_BASE_URL}${path}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+      body: JSON.stringify(body),
+    })
+  );
+}
+
+/** O motivo é obrigatório: a API recusa sem ele, e com razão. */
+export async function changeAccountPlan(userId: string, plan: string, reason: string) {
+  return patch<AdminAccount>(`/v1/admin/accounts/${userId}/plan`, { plan, reason });
+}
+
+export async function changeAccountStatus(
+  userId: string,
+  isActive: boolean,
+  reason: string
+) {
+  return patch<AdminAccount>(`/v1/admin/accounts/${userId}/status`, {
+    is_active: isActive,
+    reason,
+  });
+}
+
+export async function listAudit(limit = 100) {
+  return get<AdminAction[]>(`/v1/admin/audit?limit=${limit}`);
 }
 
 export function resolveBackendUrl(path?: string | null) {

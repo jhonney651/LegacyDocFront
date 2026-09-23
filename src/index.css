@@ -2354,3 +2354,266 @@ body[data-modo="pro"] .home-page::after {
   font-size: 0.9rem;
   line-height: 1.6;
 }
+
+/* =========================================================
+   28. PAINEL DE CONTAS
+
+   Tela operada, nao lida. O que decide uma acao e o consumo
+   contra o teto, entao ele vira barra e nao so numero: perto do
+   limite tem de se ver de relance, sem comparar duas casas
+   decimais.
+========================================================= */
+
+.admin-hero {
+  align-items: stretch;
+  text-align: left;
+  max-width: 940px;
+  width: 100%;
+}
+
+/* O hero centralizado estica os filhos; aqui o conteudo e alinhado a
+   esquerda, entao o selo e a busca precisam voltar ao tamanho proprio. */
+.admin-hero > .badge {
+  align-self: flex-start;
+}
+
+.admin-hero h1,
+.admin-hero .hero-subtitle {
+  text-align: left;
+}
+
+.admin-busca {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.admin-busca input {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.admin-erro {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--danger);
+  background: var(--danger-soft);
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.admin-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.admin-conta {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Conta desativada continua legivel: quem opera precisa ler para
+   decidir reativar. Recua o suficiente para nao competir. */
+.admin-conta[data-inativa="sim"] {
+  border-style: dashed;
+  opacity: 0.72;
+}
+
+.admin-conta-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-identidade {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-identidade strong {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-marcas {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.admin-plano,
+.admin-marca {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.admin-plano.plano-pro,
+.admin-plano.plano-team {
+  border-color: var(--roxo-400);
+  background: rgba(167, 139, 250, 0.12);
+  color: var(--roxo-300);
+}
+
+body.light .admin-plano.plano-pro,
+body.light .admin-plano.plano-team {
+  color: var(--roxo-700);
+}
+
+.admin-marca.perigo {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.admin-marca.alerta {
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.admin-metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.admin-metricas > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-metricas span {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.admin-metricas strong {
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-barra {
+  margin-top: 4px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--card-dark);
+  overflow: hidden;
+}
+
+.admin-barra-cheia {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+/* Perto do teto muda de cor, e nao so de comprimento: comprimento
+   sozinho obriga a comparar barras lado a lado. */
+.admin-barra-cheia[data-alto="sim"] {
+  background: var(--danger);
+}
+
+.admin-edicao {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.admin-edicao label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.admin-edicao input {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-dark);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.admin-dica {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.admin-acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-acoes .btn {
+  font-size: 0.85rem;
+  padding: 9px 14px;
+}
+
+.admin-auditoria {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.admin-auditoria h2 {
+  font-size: 1.05rem;
+  margin: 0 0 14px;
+}
+
+.admin-auditoria ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-auditoria li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border-strong);
+  font-size: 0.86rem;
+}
+
+.admin-auditoria p {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+}
+
+.admin-transicao {
+  margin-left: 8px;
+  color: var(--primary-text);
+}
