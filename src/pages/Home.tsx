@@ -277,10 +277,10 @@ export default function Home() {
             </fieldset>
           )}
 
-          {espiando && (
+          {espiando && account && (
             <div className="espiada-aviso" role="status">
               <strong>Você está vendo como fica o nível {DEPTH_INFO[espiando]?.title}.</strong>{" "}
-              Seu plano {account?.plan.display_name} cobre até{" "}
+              Seu plano {account.plan.display_name} cobre até{" "}
               {DEPTH_INFO[account.plan.max_depth]?.title}. A análise vai rodar nesse nível.
             </div>
           )}
