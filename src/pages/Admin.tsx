@@ -34,7 +34,6 @@ function formatarData(iso: string | null) {
   return Number.isNaN(data.valueOf()) ? iso : data.toLocaleString("pt-BR");
 }
 
-/** Quanto do teto do plano já foi consumido, limitado a 100%. */
 function consumo(conta: AdminAccount) {
   if (conta.cost_limit_usd <= 0) return 0;
 
@@ -50,7 +49,6 @@ export default function Admin() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  /** Conta cuja edição está aberta. Uma por vez, para o motivo não se perder. */
   const [editando, setEditando] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -132,8 +130,6 @@ export default function Admin() {
 
   const motivoValido = motivo.trim().length >= MOTIVO_MINIMO;
 
-  // O painel recusa por conta própria quem não é administrador, respondendo 404.
-  // Esta tela apenas traduz isso, em vez de mostrar uma lista vazia sem explicação.
   const semAcesso = erro?.includes("nao encontrado") || erro?.includes("não encontrado");
 
   if (semAcesso) {

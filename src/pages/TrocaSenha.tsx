@@ -45,12 +45,6 @@ export default function TrocaSenha() {
 
             <h1>Verifique seu e-mail</h1>
 
-            {/*
-              A mensagem é deliberadamente condicional ("se houver uma conta").
-              A API responde igual exista ou não o e-mail, para não virar um
-              verificador de quem tem cadastro; afirmar aqui que o e-mail existe
-              anularia essa proteção.
-            */}
             <p className="hero-subtitle">
               Se houver uma conta com <strong>{email.trim()}</strong>, enviamos um
               link para redefinir a senha. Ele vale por 30 minutos e só pode ser

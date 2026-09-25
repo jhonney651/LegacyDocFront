@@ -18,14 +18,6 @@ type DepthInfo = {
   cost: string;
 };
 
-/**
- * O que cada degrau entrega, em vez de so o nome dele.
- *
- * Um <select> escondia a diferenca justamente no momento em que a pessoa
- * precisa compara-la, e a diferenca e de custo: o nivel completo sai por
- * quase dez vezes o basico. Quem escolhe no escuro descobre na fatura.
- */
-/** Ordem fixa, do mais raso ao mais profundo. */
 const TODOS_OS_NIVEIS = ["basic", "standard", "pro"] as const;
 
 const DEPTH_INFO: Record<string, DepthInfo> = {
@@ -46,8 +38,6 @@ const DEPTH_INFO: Record<string, DepthInfo> = {
   },
 };
 
-/** Cadeado. Inline para nao depender de fonte de icone nem de outra
- *  requisicao so para desenhar uma tranca. */
 function LockIcon() {
   return (
     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" aria-hidden="true">
@@ -63,7 +53,6 @@ function LockIcon() {
 }
 
 export default function Home() {
-
   const navigate = useNavigate();
   const [repoUrl, setRepoUrl] = useState("");
   const [branch, setBranch] = useState("");
@@ -71,12 +60,6 @@ export default function Home() {
   const [account, setAccount] = useState<CurrentUser | null>(null);
   const campoRepo = useRef<HTMLInputElement>(null);
 
-  /**
-   * De onde vem o código: de um link ou da máquina da pessoa.
-   *
-   * Sistema legado, o caso comum, muitas vezes nem está no GitHub. Os dois
-   * caminhos terminam na mesma fila e na mesma tela de resultado.
-   */
   const [origem, setOrigem] = useState<"link" | "computador">("link");
   const [extensoes, setExtensoes] = useState<Set<string> | null>(null);
   const [material, setMaterial] = useState<PreparedUpload | null>(null);
@@ -84,20 +67,10 @@ export default function Home() {
   const [progressoEnvio, setProgressoEnvio] = useState(0);
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
 
-  /**
-   * Nível travado que a pessoa clicou para ver como é.
-   *
-   * Separado de `depth` de propósito: espiar muda o visual, não muda o que
-   * será enviado. Misturar os dois deixaria o botão de analisar prometendo
-   * uma análise que o plano não cobre.
-   */
   const [espiando, setEspiando] = useState<string | null>(null);
 
-  // Reobserva quando a conta carrega: os cartoes de profundidade so
-  // existem depois que a API responde qual e o plano.
   useRevelar([account?.id]);
 
-  // Extensoes que o servidor documenta, para filtrar a pasta escolhida.
   useEffect(() => {
     let ativo = true;
 
@@ -113,9 +86,6 @@ export default function Home() {
     };
   }, []);
 
-  // O modo Pro veste a pagina inteira, barra de navegacao incluida. Metade
-  // da tela mudando de cor e a outra metade nao pareceria defeito, nao
-  // recompensa. Sai ao deixar a tela, senao a cor vaza para as outras.
   const modoPro = espiando === "pro" || (espiando === null && depth === "pro");
 
   useEffect(() => {
@@ -128,9 +98,6 @@ export default function Home() {
     };
   }, [modoPro]);
 
-  // Atalho "/" para cair no campo, como GitHub, Slack e todo editor.
-  // Quem usa a ferramenta passa o dia no teclado; obrigar a pegar o
-  // mouse para comecar e a fricção mais boba que existe.
   useEffect(() => {
     function aoTeclar(evento: KeyboardEvent) {
       if (evento.key !== "/" || evento.defaultPrevented) return;
@@ -151,9 +118,6 @@ export default function Home() {
     return () => window.removeEventListener("keydown", aoTeclar);
   }, []);
 
-  // A escada de profundidades vem da API, nao fica fixa aqui. O backend e a
-  // fonte da verdade sobre o que cada plano libera, e uma copia no front
-  // diverge no dia em que um plano mudar.
   useEffect(() => {
     if (!getAuthToken()) return;
 
@@ -175,8 +139,6 @@ export default function Home() {
     try {
       const job = await createUploadJob(material.file, depth || null, setProgressoEnvio);
 
-      // O job ja existe. A tela de carregamento so acompanha, e para isso basta
-      // o id: o arquivo em si nao cabe em localStorage e nao precisa ir junto.
       localStorage.setItem("pendingJobId", job.id);
       localStorage.setItem("repoUrl", material.label);
       localStorage.setItem("repoBranch", "");
@@ -220,9 +182,6 @@ export default function Home() {
     <>
       <Navbar />
 
-      {/* O atributo troca a escala de cor da pagina inteira. Nao e enfeite
-          no cartao: a tela responde a escolha, que e o argumento de por que
-          o nivel mais profundo vale a pena. */}
       <main id="conteudo" className="home-page">
         <div className="home-overlay"></div>
 
@@ -356,10 +315,6 @@ export default function Home() {
                     data-modo={ehPro ? "pro" : undefined}
                     data-travado={liberado ? undefined : "sim"}
                     aria-pressed={selecionado}
-                    // Travado nao e desabilitado: o cartao continua clicavel
-                    // e focavel, porque clicar nele e justamente o que mostra
-                    // o que a pessoa ganharia. `aria-disabled` avisa o leitor
-                    // de tela que aquilo nao e uma escolha valida.
                     aria-disabled={liberado ? undefined : true}
                     onClick={() => {
                       if (liberado) {
@@ -392,9 +347,6 @@ export default function Home() {
                   </button>
                 );
 
-                // A moldura girando envolve o nivel mais profundo quando ele
-                // esta escolhido ou sendo espiado. Fora disso o cartao fica
-                // igual aos outros: animar sempre compete com a leitura.
                 return ehPro && (selecionado || espiado) ? (
                   <div className="pro-frame" key={item}>
                     {cartao}

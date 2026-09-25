@@ -1,17 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap");
 
-/* =========================================================
-   RAIZ
-
-   `overflow-x: hidden` aqui criava tres containers de rolagem
-   aninhados, porque esconder um eixo obriga o outro a rolar.
-   O documento ficava com altura zero e quem rolava era o #root.
-
-   Isso quebra rolagem ancorada, `position: sticky` e qualquer
-   animacao medida contra a viewport. `clip` corta no mesmo eixo
-   sem criar container, entao volta a existir um unico scroller:
-   o documento.
-========================================================= */
+/* RAIZ */
 
 html,
 body,
@@ -33,25 +22,16 @@ body {
   color: var(--text);
 }
 
-/* Rolagem suave nas ancoras, respeitando quem pediu menos
-   movimento. */
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
   }
 }
 
-/* =========================================================
-   1. TOKENS DE TEMA
-
-   Uma cor so aparece aqui. Qualquer valor cravado no resto do
-   arquivo quebra num dos dois temas, que foi o que aconteceu
-   antes: 160 valores fixos, e o tema claro nunca ficou certo.
-========================================================= */
+/* 1. TOKENS DE TEMA */
 
 :root {
-  /* Escala da marca: azul. E a identidade do produto e a cor de
-     tudo que nao e Pro. */
+
   --azul-50: #eff6ff;
   --azul-100: #dbeafe;
   --azul-200: #bfdbfe;
@@ -64,9 +44,6 @@ body {
   --azul-900: #1e3a8a;
   --azul-950: #172554;
 
-  /* Escala do Pro: violeta. Nao e decoracao alternativa, e sinal.
-     Roxo so aparece quando a pessoa escolhe o nivel mais profundo,
-     entao a cor vira a recompensa visivel de ter escolhido. */
   --roxo-50: #f5f3ff;
   --roxo-100: #ede9fe;
   --roxo-200: #ddd6fe;
@@ -79,9 +56,6 @@ body {
   --roxo-900: #4c1d95;
   --roxo-950: #2e1065;
 
-  /* `--brand-*` e um apelido: aponta para o azul por padrao e para o
-     roxo dentro de uma area Pro. Todo o resto do arquivo consome o
-     apelido e nao sabe qual das duas escalas esta atras. */
   --brand-50: var(--azul-50);
   --brand-100: var(--azul-100);
   --brand-200: var(--azul-200);
@@ -94,8 +68,6 @@ body {
   --brand-900: var(--azul-900);
   --brand-950: var(--azul-950);
 
-  /* Neutros. Sem puxar para nenhum dos dois lados, porque servem as
-     duas escalas. */
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
   --slate-200: #e2e8f0;
@@ -117,7 +89,7 @@ body {
   --speed: 200ms;
 }
 
-/* ---------------------------------------------- tema escuro */
+/* tema escuro */
 
 :root,
 body.dark {
@@ -139,15 +111,8 @@ body.dark {
   --primary-hover: var(--brand-400);
   --on-primary: #ffffff;
 
-  /* Marca aplicada a texto. O tom de preenchimento (--primary) da
-     3.98:1 sobre o cartao escuro, abaixo do minimo de 4.5:1 para
-     texto. Este da folga. */
   --primary-text: var(--brand-300);
 
-  /* Realces derivados da propria marca com `color-mix`, e nao escritos a
-     mao. Sao alfa para funcionar sobre qualquer superficie, e derivar em
-     vez de fixar significa que trocar a escala no modo Pro arrasta todos
-     eles junto, sem uma segunda lista para manter em dia. */
   --primary-soft: color-mix(in srgb, var(--brand-500) 16%, transparent);
   --primary-softer: color-mix(in srgb, var(--brand-500) 8%, transparent);
   --primary-ring: color-mix(in srgb, var(--brand-400) 62%, transparent);
@@ -163,12 +128,7 @@ body.dark {
   --shadow: rgba(0, 0, 0, 0.45);
 }
 
-/* ---------------------------------------------- tema claro
-
-   Tambem em `:root:has(body.light)` porque o `html` esta acima do
-   `body` na arvore e nunca herdaria variavel declarada nele. Sem
-   isto o `html` continua pintado de escuro e aparece uma faixa
-   preta acima do conteudo no tema claro. */
+/* tema claro */
 
 body.light,
 :root:has(body.light) {
@@ -185,8 +145,6 @@ body.light,
   --text: var(--slate-900);
   --text-secondary: var(--slate-600);
 
-  /* Um tom mais escuro que no tema escuro: violeta claro sobre
-     branco nao alcanca contraste de texto. */
   --primary: var(--brand-600);
   --primary-dark: var(--brand-800);
   --primary-hover: var(--brand-700);
@@ -209,12 +167,7 @@ body.light,
   --shadow: rgba(20, 17, 31, 0.14);
 }
 
-/* ------------------------------------------------- relatorio
-
-   O relatorio e papel: fundo claro nos dois temas, de proposito.
-   E um documento que a pessoa vai imprimir ou mandar para alguem,
-   entao ele nao acompanha o tema da aplicacao. Ficava por acidente,
-   com valores cravados; agora e uma decisao declarada. */
+/* relatorio */
 
 :root {
   --paper-bg: var(--slate-50);
@@ -227,9 +180,7 @@ body.light,
   --paper-ink: var(--brand-800);
 }
 
-/* =========================================================
-   2. RESET GLOBAL
-========================================================= */
+/* 2. RESET GLOBAL */
 
 * {
   margin: 0;
@@ -263,9 +214,7 @@ a {
   color: var(--primary);
 }
 
-/* =========================================================
-   3. COMPONENTES GLOBAIS
-========================================================= */
+/* 3. COMPONENTES GLOBAIS */
 
 .btn,
 .form-box button,
@@ -322,9 +271,7 @@ a {
   margin-bottom: 22px;
 }
 
-/* =========================================================
-   4. NAVBAR
-========================================================= */
+/* 4. NAVBAR */
 
 .topbar {
   width: calc(100% - 48px);
@@ -428,9 +375,7 @@ body.light .topbar {
   box-shadow: 0 8px 22px var(--primary-soft);
 }
 
-/* =========================================================
-   5. TELAS CENTRAIS PADRÃO
-========================================================= */
+/* 5. TELAS CENTRAIS PADRÃO */
 
 .main-screen,
 .auth-page {
@@ -485,19 +430,13 @@ body.light .auth-page {
   margin-bottom: 30px;
 }
 
-/* =========================================================
-   6. HOME
-========================================================= */
+/* 6. HOME */
 
 .home-page {
   position: relative;
   min-height: calc(100vh - 90px);
   display: flex;
 
-  /* `overflow-x: clip` corta os gradientes na horizontal sem travar a
-     rolagem vertical. Com `overflow: hidden` o conteudo que passasse da
-     dobra ficava inalcancavel, que foi o que aconteceu quando os cartoes
-     de profundidade entraram. */
   overflow-x: clip;
 
   padding: 72px 24px;
@@ -525,9 +464,6 @@ body.light .home-page {
   position: relative;
   z-index: 2;
 
-  /* `margin: auto` centraliza como `align-items: center`, mas quando o
-     conteudo passa da altura do container o navegador para de cortar o
-     topo. Com centralizacao de flex o inicio fica fora de alcance. */
   margin: auto;
 
   max-width: 920px;
@@ -586,11 +522,7 @@ body.light .home-page {
   display: none;
 }
 
-
-
-/* =========================================================
-   7. FORMULÁRIOS / AUTH
-========================================================= */
+/* 7. FORMULÁRIOS / AUTH */
 
 .form-box {
   display: flex;
@@ -672,9 +604,7 @@ body.light .form-box input {
   margin-top: 16px;
 }
 
-/* =========================================================
-   8. LOADING
-========================================================= */
+/* 8. LOADING */
 
 .loader {
   margin: 28px auto;
@@ -694,9 +624,7 @@ body.light .form-box input {
   }
 }
 
-/* =========================================================
-   9. HISTÓRICO / LOG
-========================================================= */
+/* 9. HISTÓRICO / LOG */
 
 .log-list {
   margin-top: 38px;
@@ -760,9 +688,7 @@ body.light .form-box input {
   text-align: center;
 }
 
-/* =========================================================
-   10. RESULTADO - ESTRUTURA GERAL
-========================================================= */
+/* 10. RESULTADO - ESTRUTURA GERAL */
 
 .result-page {
   width: 100%;
@@ -787,10 +713,6 @@ body.light .result-page {
   max-width: 1180px;
   margin: 0 auto;
 
-  /* `clip` e nao `hidden`: os dois cortam o canto arredondado, mas
-     `hidden` cria um container de rolagem, e `animation-timeline: view()`
-     mede contra o scroller mais proximo. Com um scroller que nunca rola,
-     o conteudo fica sempre "em vista" e a revelacao nunca acontece. */
   overflow: clip;
 
   border-radius: 28px;
@@ -800,9 +722,7 @@ body.light .result-page {
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.32);
 }
 
-/* =========================================================
-   11. RESULTADO - HEADER DO RELATÓRIO
-========================================================= */
+/* 11. RESULTADO - HEADER DO RELATÓRIO */
 
 .report-header {
   min-height: 150px;
@@ -907,9 +827,7 @@ body.light .result-page {
   color: var(--on-primary);
 }
 
-/* =========================================================
-   12. RESULTADO - HERO DO RELATÓRIO
-========================================================= */
+/* 12. RESULTADO - HERO DO RELATÓRIO */
 
 .report-hero {
   display: grid;
@@ -970,9 +888,7 @@ body.light .result-page {
   color: var(--primary);
 }
 
-/* =========================================================
-   13. RESULTADO - CARDS BASE
-========================================================= */
+/* 13. RESULTADO - CARDS BASE */
 
 .repo-info-card,
 .stack-card,
@@ -1024,9 +940,7 @@ body.light .result-page {
   border-bottom: 2px solid var(--primary);
 }
 
-/* =========================================================
-   14. RESULTADO - REPOSITÓRIO
-========================================================= */
+/* 14. RESULTADO - REPOSITÓRIO */
 
 .repo-row {
   display: grid;
@@ -1062,9 +976,7 @@ body.light .result-page {
   background: var(--paper-border);
 }
 
-/* =========================================================
-   15. RESULTADO - STACK / ARQUITETURA
-========================================================= */
+/* 15. RESULTADO - STACK / ARQUITETURA */
 
 .report-two-columns {
   display: grid;
@@ -1151,9 +1063,7 @@ body.light .result-page {
   font-size: 0.92rem;
 }
 
-/* =========================================================
-   16. RESULTADO - MÉTRICAS
-========================================================= */
+/* 16. RESULTADO - MÉTRICAS */
 
 .metrics-row {
   display: grid;
@@ -1202,9 +1112,7 @@ body.light .result-page {
   font-weight: 800;
 }
 
-/* =========================================================
-   17. RESULTADO - INSIGHTS / MELHORIAS / RESUMO
-========================================================= */
+/* 17. RESULTADO - INSIGHTS / MELHORIAS / RESUMO */
 
 .report-grid-bottom {
   display: grid;
@@ -1331,9 +1239,7 @@ body.light .result-page {
   word-break: break-word;
 }
 
-/* =========================================================
-   18. RESULTADO - FUNÇÕES DOCUMENTADAS
-========================================================= */
+/* 18. RESULTADO - FUNÇÕES DOCUMENTADAS */
 
 .documented-functions {
   margin: 34px 52px 0;
@@ -1419,9 +1325,7 @@ body.light .result-page {
   color: var(--paper-muted);
 }
 
-/* =========================================================
-   19. RESULTADO - OBSERVAÇÕES / FOOTER
-========================================================= */
+/* 19. RESULTADO - OBSERVAÇÕES / FOOTER */
 
 .report-observation {
   margin: 34px 52px 0;
@@ -1471,9 +1375,7 @@ body.light .result-page {
   font-size: 0.85rem;
 }
 
-/* =========================================================
-   20. RESPONSIVO
-========================================================= */
+/* 20. RESPONSIVO */
 
 @media (max-width: 1050px) {
   .report-hero,
@@ -1619,16 +1521,8 @@ body.light .result-page {
   }
 }
 
-/* =========================================================
-   21. ACESSIBILIDADE
+/* 21. ACESSIBILIDADE */
 
-   Faltava o basico. Sem anel de foco, quem navega por teclado
-   nao enxerga onde esta; sem o corte de movimento, quem tem
-   sensibilidade vestibular nao tem saida.
-========================================================= */
-
-/* Visivel apenas para leitor de tela. Rotulo que a estrutura
-   exige e o desenho nao precisa mostrar. */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1641,9 +1535,6 @@ body.light .result-page {
   border: 0;
 }
 
-/* Sem `:where()` de proposito. Ele zera a especificidade, e o anel de
-   foco precisa ganhar de qualquer `outline: none` espalhado pelo
-   arquivo. Aqui cada seletor vale por si e vence. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -1659,8 +1550,6 @@ summary:focus-visible,
   outline-offset: 2px;
 }
 
-/* O foco so aparece para quem navega por teclado. O clique do mouse ja
-   diz onde a pessoa esta, e um anel depois de cada clique vira ruido. */
 a:focus:not(:focus-visible),
 button:focus:not(:focus-visible),
 input:focus:not(:focus-visible),
@@ -1669,8 +1558,6 @@ textarea:focus:not(:focus-visible) {
   outline: none;
 }
 
-/* Atalho para pular a navegacao e cair direto no conteudo.
-   Invisivel ate receber foco. */
 .skip-link {
   position: absolute;
   left: 50%;
@@ -1693,8 +1580,6 @@ textarea:focus:not(:focus-visible) {
   transform: translate(-50%, 0);
 }
 
-/* Area de toque minima. Alvo menor que isto e erro de acerto
-   garantido no celular. */
 button,
 .btn,
 a.link-btn {
@@ -1712,18 +1597,7 @@ a.link-btn {
   }
 }
 
-/* =========================================================
-   22. NIVEL PRO
-
-   O degrau mais profundo custa mais e entrega mais, entao tem
-   de parecer outro patamar. A borda e uma conica girando por
-   tras de uma superficie opaca: o que se ve e so a faixa de
-   luz na moldura, nao um retangulo colorido.
-
-   Tudo aqui e decoracao. A informacao continua legivel se o
-   navegador ignorar cada uma destas regras, e o corte de
-   movimento da secao anterior para a animacao.
-========================================================= */
+/* 22. NIVEL PRO */
 
 @property --pro-angle {
   syntax: "<angle>";
@@ -1771,8 +1645,6 @@ a.link-btn {
   background: var(--card-solid);
 }
 
-/* Selo. Monoespacado e em caixa alta de proposito: le como
-   etiqueta de sistema, nao como texto corrido. */
 .pro-badge {
   display: inline-flex;
   align-items: center;
@@ -1812,8 +1684,6 @@ body.light .pro-badge {
   animation: pro-pulse 2.4s ease-in-out infinite;
 }
 
-/* Malha tenue no fundo de uma area Pro. Fica abaixo do
-   conteudo e nao intercepta clique. */
 .pro-surface {
   position: relative;
   isolation: isolate;
@@ -1837,9 +1707,6 @@ body.light .pro-badge {
   mask-image: radial-gradient(circle at 50% 0%, #000, transparent 72%);
 }
 
-/* Opcao de profundidade: cartao clicavel em vez de <select>.
-   Um seletor nativo esconde a diferenca entre os niveis, que e
-   justamente o que a pessoa precisa comparar para escolher. */
 .depth-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -1848,9 +1715,6 @@ body.light .pro-badge {
   max-width: 720px;
   margin: 18px auto 0;
 
-  /* Textos de tamanhos diferentes deixavam os cartoes desalinhados na
-     base. Esticar o embrulho e o cartao iguala os tres sem fixar altura,
-     que quebraria quando um texto crescer. */
   align-items: stretch;
 }
 
@@ -1913,7 +1777,7 @@ body.light .pro-badge {
   color: var(--primary-text);
 }
 
-/* --------------------------------------------------- home: opcoes */
+/* home: opcoes */
 
 .home-branch {
   display: flex;
@@ -1964,7 +1828,7 @@ body.light .pro-badge {
   color: var(--text);
 }
 
-/* --------------------------------------------- relatorio: selo */
+/* relatorio: selo */
 
 .report-kicker-row {
   display: flex;
@@ -1974,8 +1838,6 @@ body.light .pro-badge {
   margin-bottom: 10px;
 }
 
-/* Dentro do papel o selo perde o brilho: o fundo e claro e o neon
-   que funciona no tema escuro vira borrao aqui. */
 .report-paper .pro-badge {
   color: var(--brand-700);
   border-color: var(--brand-300);
@@ -1988,27 +1850,8 @@ body.light .pro-badge {
   box-shadow: none;
 }
 
-/* =========================================================
-   23. MOVIMENTO
+/* 23. MOVIMENTO */
 
-   Animacao ligada a rolagem, sem biblioteca e sem JavaScript.
-   `animation-timeline: view()` amarra o progresso da animacao a
-   posicao do elemento na janela, entao o navegador resolve em
-   thread propria e nada disso disputa com o React.
-
-   Tudo aqui e progressivo: onde nao houver suporte o elemento
-   simplesmente aparece, e a secao de acessibilidade ja corta o
-   movimento inteiro para quem pediu.
-========================================================= */
-
-/* O estado padrao e visivel. `por-revelar` so e aplicada pelo observador,
-   depois de ele existir e confirmar que vai revelar. Script quebrado ou
-   ausente deixa o conteudo como esta: legivel. Animacao e decoracao e nao
-   pode esconder documento.
-
-   Fora de media query de proposito: quem decide se anima e o hook, que ja
-   consulta a preferencia de movimento antes de aplicar a classe. Uma
-   segunda checagem aqui so cria dois lugares para a regra divergir. */
 .por-revelar {
   opacity: 0.2;
   transform: translateY(20px);
@@ -2023,9 +1866,7 @@ body.light .pro-badge {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Entrada de elemento novo na arvore. `@starting-style` da ao
-     navegador o estado de onde partir, o que antes exigia um truque
-     de duas renderizacoes no React. */
+
   @starting-style {
     .entrar {
       opacity: 0;
@@ -2040,7 +1881,7 @@ body.light .pro-badge {
   }
 }
 
-/* --------------------------------------------- view transitions */
+/* view transitions */
 
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root) {
@@ -2066,13 +1907,7 @@ body.light .pro-badge {
   }
 }
 
-/* =========================================================
-   24. DETALHES PARA QUEM ESCREVE CODIGO
-
-   A pessoa que usa isto passa o dia num editor. Caminho de
-   arquivo, nome de simbolo e assinatura sao codigo e devem
-   parecer codigo: monoespacados, alinhados, selecionaveis.
-========================================================= */
+/* 24. DETALHES PARA QUEM ESCREVE CODIGO */
 
 .mono,
 .file-path,
@@ -2083,8 +1918,6 @@ body.light .pro-badge {
   font-size: 0.92em;
 }
 
-/* Atalho de teclado. Mesmo desenho que editor e terminal usam,
-   entao le como tecla sem precisar de legenda. */
 kbd {
   display: inline-flex;
   align-items: center;
@@ -2116,7 +1949,6 @@ kbd {
   white-space: nowrap;
 }
 
-/* Some quando nao ha espaco: a dica e conveniencia, o campo nao. */
 @container (max-width: 520px) {
   .search-hint {
     display: none;
@@ -2127,18 +1959,7 @@ kbd {
   container-type: inline-size;
 }
 
-/* =========================================================
-   25. MODO PRO
-
-   Azul e a identidade. Roxo e o que a pessoa ganha ao escolher o
-   nivel mais profundo.
-
-   A troca acontece em um lugar so: `--brand-*` deixa de apontar
-   para o azul e passa a apontar para o roxo. Nenhuma regra do
-   resto do arquivo precisa saber disso, porque todas ja consomem
-   o apelido. Os realces, o brilho e o anel de foco sao derivados
-   da marca com `color-mix`, entao acompanham sozinhos.
-========================================================= */
+/* 25. MODO PRO */
 
 [data-modo="pro"] {
   --brand-50: var(--roxo-50);
@@ -2153,13 +1974,6 @@ kbd {
   --brand-900: var(--roxo-900);
   --brand-950: var(--roxo-950);
 
-  /* A camada semantica precisa ser redeclarada aqui, e nao herda a
-     troca de cima.
-     Uma custom property resolve o `var()` no elemento onde e
-     DECLARADA, nao onde e usada. `--primary: var(--brand-500)` mora no
-     `:root`, entao ja congelou o azul; trocar `--brand-500` mais fundo
-     na arvore nao a recalcula. Declarando de novo aqui, o `var()`
-     resolve contra o `--brand-500` deste elemento, que e roxo. */
   --primary: var(--brand-500);
   --primary-dark: var(--brand-700);
   --primary-hover: var(--brand-400);
@@ -2184,8 +1998,6 @@ body.light[data-modo="pro"] {
   --primary-glow: color-mix(in srgb, var(--brand-600) 24%, transparent);
 }
 
-/* A cor troca com transicao, nao com corte. O momento da escolha e
-   o argumento de venda: a tela inteira responde a decisao. */
 @media (prefers-reduced-motion: no-preference) {
   .home-page,
   .home-search,
@@ -2197,8 +2009,6 @@ body.light[data-modo="pro"] {
   }
 }
 
-/* Brilho de fundo que so existe no modo Pro. Fica atras de tudo e
-   nao intercepta clique. */
 body[data-modo="pro"] .home-page::after {
   content: "";
   position: absolute;
@@ -2221,24 +2031,13 @@ body[data-modo="pro"] .home-page::after {
   }
 }
 
-/* =========================================================
-   26. NIVEL TRAVADO
-
-   O que o plano nao cobre continua na tela, com cadeado. Esconder
-   deixaria a pessoa sem saber que existe, e o que ela nao sabe que
-   existe ela nao assina.
-
-   Travado nao e desabilitado: o cartao continua clicavel, porque
-   clicar nele e o que mostra o que ela ganharia.
-========================================================= */
+/* 26. NIVEL TRAVADO */
 
 .depth-card[data-travado="sim"] {
   border-style: dashed;
   cursor: pointer;
 }
 
-/* O conteudo descritivo recua, o rotulo da trava nao. A pessoa
-   precisa ler o que e, so nao com o mesmo peso do que ela pode usar. */
 .depth-card[data-travado="sim"] .depth-card-note,
 .depth-card[data-travado="sim"] .depth-card-cost {
   opacity: 0.62;
@@ -2265,8 +2064,6 @@ body[data-modo="pro"] .home-page::after {
   color: var(--primary-text);
 }
 
-/* Convite, e nao aviso de erro: cor da marca, nao vermelho. Recusar
-   em vermelho ensina a pessoa a evitar o que voce quer vender. */
 .depth-card-trava {
   margin-top: 8px;
   padding-top: 8px;
@@ -2298,9 +2095,7 @@ body[data-modo="pro"] .home-page::after {
   color: var(--primary-text);
 }
 
-/* =========================================================
-   27. PONTOS DE MELHORIA NO RELATORIO
-========================================================= */
+/* 27. PONTOS DE MELHORIA NO RELATORIO */
 
 .improvement-suggestion {
   margin-top: 6px;
@@ -2321,10 +2116,6 @@ body[data-modo="pro"] .home-page::after {
   font-size: 0.78rem;
 }
 
-/* Bloco de convite quando nao ha pontos para mostrar.
-   Veste a cor do Pro mesmo dentro de um relatorio azul: e o unico
-   lugar da tela que fala do que a pessoa ainda nao tem, e o contraste
-   com o resto do documento e o que faz ele ser notado. */
 .melhorias-travadas {
   display: flex;
   flex-direction: column;
@@ -2355,14 +2146,7 @@ body[data-modo="pro"] .home-page::after {
   line-height: 1.6;
 }
 
-/* =========================================================
-   28. PAINEL DE CONTAS
-
-   Tela operada, nao lida. O que decide uma acao e o consumo
-   contra o teto, entao ele vira barra e nao so numero: perto do
-   limite tem de se ver de relance, sem comparar duas casas
-   decimais.
-========================================================= */
+/* 28. PAINEL DE CONTAS */
 
 .admin-hero {
   align-items: stretch;
@@ -2371,8 +2155,6 @@ body[data-modo="pro"] .home-page::after {
   width: 100%;
 }
 
-/* O hero centralizado estica os filhos; aqui o conteudo e alinhado a
-   esquerda, entao o selo e a busca precisam voltar ao tamanho proprio. */
 .admin-hero > .badge {
   align-self: flex-start;
 }
@@ -2425,8 +2207,6 @@ body[data-modo="pro"] .home-page::after {
   gap: 16px;
 }
 
-/* Conta desativada continua legivel: quem opera precisa ler para
-   decidir reativar. Recua o suficiente para nao competir. */
 .admin-conta[data-inativa="sim"] {
   border-style: dashed;
   opacity: 0.72;
@@ -2530,8 +2310,6 @@ body.light .admin-plano.plano-team {
   background: var(--primary);
 }
 
-/* Perto do teto muda de cor, e nao so de comprimento: comprimento
-   sozinho obriga a comparar barras lado a lado. */
 .admin-barra-cheia[data-alto="sim"] {
   background: var(--danger);
 }
@@ -2618,12 +2396,7 @@ body.light .admin-plano.plano-team {
   color: var(--primary-text);
 }
 
-/* =========================================================
-   29. ENVIO DE CODIGO DO COMPUTADOR
-
-   Tudo pelos tokens de cor: a area acompanha o azul e vira roxa
-   junto com o resto da tela quando o nivel Pro esta escolhido.
-========================================================= */
+/* 29. ENVIO DE CODIGO DO COMPUTADOR */
 
 .origem-toggle {
   display: inline-flex;
@@ -2672,8 +2445,6 @@ body.light .admin-plano.plano-team {
   transition: border-color var(--speed) var(--ease), background-color var(--speed) var(--ease);
 }
 
-/* Solido depois de escolher: o tracejado convida a soltar algo, e ja nao ha
-   nada a soltar. */
 .upload-resumo {
   border-style: solid;
   text-align: left;

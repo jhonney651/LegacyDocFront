@@ -7,8 +7,6 @@ export default function Loading() {
   const navigate = useNavigate();
   const hasStarted = useRef(false);
 
-  // O worker informa o que esta fazendo a cada arquivo. Mostrar isso e a
-  // diferenca entre uma espera de minutos que parece travada e uma que nao.
   const [percent, setPercent] = useState(0);
   const [message, setMessage] = useState("Enfileirando o repositório...");
 
@@ -21,9 +19,6 @@ export default function Loading() {
       const branch = localStorage.getItem("repoBranch");
       const depth = localStorage.getItem("repoDepth");
 
-      // Quem envia arquivo cria o job na tela anterior, onde existe a barra de
-      // envio, e chega aqui so para acompanhar. Lido e apagado na hora: um id
-      // que sobrasse faria a proxima visita a esta tela reabrir o job antigo.
       const pendingJobId = localStorage.getItem("pendingJobId");
       localStorage.removeItem("pendingJobId");
 
@@ -43,10 +38,6 @@ export default function Loading() {
           ? await followJob(pendingJobId, acompanhar)
           : await runRepositoryJob({ repoUrl, branch, depth }, acompanhar);
 
-        // Guarda so o resultado aberto agora, para a proxima tela nao ter de
-        // buscar de novo. O historico nao e escrito aqui: ele vive no
-        // servidor, vinculado a conta, e uma copia local dele voltaria a
-        // aparecer para quem entrasse depois neste mesmo navegador.
         localStorage.setItem("legacyDocResult", JSON.stringify(data));
 
         navigate("/resultado", { viewTransition: true });

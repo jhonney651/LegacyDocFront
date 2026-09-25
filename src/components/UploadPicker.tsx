@@ -8,26 +8,15 @@ import {
 } from "../services/upload";
 
 type Props = {
-  /** Extensões que o servidor documenta. Nulo enquanto a lista carrega. */
   extensions: Set<string> | null;
 
-  /** Quantos arquivos o plano documenta por análise, para avisar antes de enviar. */
   planMaxFiles?: number;
 
   disabled?: boolean;
 
-  /** Chamado com o material pronto, ou com nulo ao trocar ou limpar. */
   onChange: (prepared: PreparedUpload | null) => void;
 };
 
-/**
- * Escolha do código que está na máquina: uma pasta ou um .zip.
- *
- * Pasta e não só .zip porque quem tem um projeto aberto no editor espera enviar
- * a pasta. Arrastar aceita só .zip: o navegador não entrega o conteúdo de uma
- * pasta solta com a mesma facilidade, e prometer isso e falhar seria pior que
- * não oferecer.
- */
 export default function UploadPicker({ extensions, planMaxFiles, disabled, onChange }: Props) {
   const campoPasta = useRef<HTMLInputElement>(null);
   const campoZip = useRef<HTMLInputElement>(null);
@@ -61,7 +50,6 @@ export default function UploadPicker({ extensions, planMaxFiles, disabled, onCha
   }
 
   function aoEscolherPasta(evento: ChangeEvent<HTMLInputElement>) {
-    // Copiado antes de limpar o campo: limpar zera a lista que veio dele.
     const arquivos = Array.from(evento.target.files ?? []);
     evento.target.value = "";
 
@@ -197,8 +185,6 @@ export default function UploadPicker({ extensions, planMaxFiles, disabled, onCha
         </button>
       </div>
 
-      {/* `webkitdirectory` nao esta nos tipos do React. O atributo e o unico jeito
-          padrao de escolher uma pasta inteira, e funciona em todo navegador atual. */}
       <input
         ref={campoPasta}
         type="file"

@@ -3,14 +3,6 @@ export const API_BASE_URL = rawApiBaseUrl.replace(/\/$/, "");
 
 const AUTH_TOKEN_KEY = "legacyDocToken";
 
-/**
- * A v2 nao gera documentacao dentro da requisicao.
- *
- * O POST devolve 202 com um id em milissegundos e um worker separado faz o
- * trabalho. Na v1 a geracao acontecia dentro do handler, prendia o servidor
- * inteiro por minutos e estourava o timeout do nginx em qualquer repositorio
- * grande. Por isso aqui existe polling em vez de uma unica espera.
- */
 const POLL_INTERVAL_MS = 2500;
 const POLL_TIMEOUT_MS = 15 * 60 * 1000;
 
@@ -70,13 +62,6 @@ export type CurrentUser = {
   jobs_used_this_month: number;
   spent_this_month_usd: number;
 
-  /**
-   * Se esta conta abre o painel.
-   *
-   * Serve para não oferecer uma porta que a pessoa vai bater e receber 404.
-   * Esconder o link não é controle de acesso: o painel recusa por conta
-   * própria quem não for administrador.
-   */
   is_admin: boolean;
 };
 
@@ -102,7 +87,6 @@ export type Job = {
   started_at: string | null;
   finished_at: string | null;
 
-  /** O que foi analisado: URL do repositório, nome do .zip ou caminho. */
   source: string | null;
 };
 
@@ -170,9 +154,6 @@ export function getAuthToken() {
 }
 
 export function setAuthToken(token: string) {
-  // Entrar tambem limpa. Sair com a aba fechada, expirar a sessao ou trocar de
-  // conta sem passar pelo botao de sair sao caminhos reais, e em todos eles o
-  // que ficou no navegador nao pertence a quem esta entrando agora.
   clearLocalSession();
 
   localStorage.setItem(AUTH_TOKEN_KEY, token);
@@ -182,9 +163,6 @@ export function setAuthToken(token: string) {
 export function clearAuthToken() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
 
-  // Sair tem de levar junto o que a sessão deixou na maquina. Apagar so o
-  // token deixava o ultimo resultado e a URL analisada visiveis para a
-  // proxima pessoa que entrasse neste navegador.
   clearLocalSession();
 
   window.dispatchEvent(new Event("legacydoc-auth-updated"));
@@ -195,13 +173,6 @@ function getAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-/**
- * Traduz o envelope de erro da v2 para uma mensagem utilizavel.
- *
- * A v1 respondia toda falha com a mesma mensagem opaca, entao o cliente nao
- * distinguia cota esgotada de repositorio invalido. A v2 responde sempre com
- * `{error, message, details}`, e e a `message` que a tela deve mostrar.
- */
 async function handleResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get("content-type");
 
@@ -241,8 +212,6 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   );
 }
 
-// ------------------------------------------------------------------ auth
-
 export async function login(email: string, password: string) {
   return post<AuthResponse>("/v1/auth/login", { email, password });
 }
@@ -266,8 +235,6 @@ export async function confirmPasswordReset(token: string, newPassword: string) {
   });
 }
 
-// ------------------------------------------------------------------ jobs
-
 export async function createRepositoryJob(params: {
   repoUrl: string;
   branch?: string | null;
@@ -290,20 +257,10 @@ export async function getJob(jobId: string) {
   return get<Job>(`/v1/jobs/${jobId}`);
 }
 
-/**
- * Histórico da conta que está autenticada agora.
- *
- * A lista vem do servidor, e não do navegador. O histórico costumava morar em
- * `localStorage`, o que parecia inofensivo e não era: nada ali é vinculado a
- * uma conta, então quem entrasse depois no mesmo navegador via as análises de
- * quem entrou antes. O servidor filtra por dono, então pedir a ele elimina a
- * classe inteira do problema em vez de remendar caso a caso.
- */
 export async function listJobs(limit = 50) {
   return get<JobList>(`/v1/jobs?limit=${limit}`);
 }
 
-/** Apaga tudo que a sessão anterior deixou no navegador. */
 export function clearLocalSession() {
   for (const chave of [
     "legacyDocResult",
@@ -331,7 +288,6 @@ export function exportPath(documentId: string, format: string) {
 
 const TERMINAL: JobStatus[] = ["succeeded", "failed", "cancelled"];
 
-/** Acompanha o job ate ele terminar, informando o progresso pelo caminho. */
 export async function waitForJob(
   jobId: string,
   onProgress?: (job: Job) => void
@@ -357,15 +313,6 @@ export async function waitForJob(
   }
 }
 
-// ------------------------------------------------------------- traducao
-
-/**
- * Converte um documento da v2 no formato que a tela de resultado ja desenha.
- *
- * A v2 descreve simbolos, onde a v1 descrevia funcoes soltas; a diferenca que
- * importa para a tela e que agora existem linhas, complexidade e classe-mae,
- * todas vindas do parser e nao do modelo.
- */
 function toFunctionItems(symbols: SymbolDoc[]): FunctionItem[] {
   return symbols.map((symbol) => ({
     name: symbol.parent ? `${symbol.parent}.${symbol.name}` : symbol.name,
@@ -382,7 +329,6 @@ function toFunctionItems(symbols: SymbolDoc[]): FunctionItem[] {
   }));
 }
 
-/** Empacota um documento no formato que a tela de resultado desenha. */
 export function documentToResult(
   detail: DocumentDetail,
   documents: DocumentSummary[]
@@ -402,18 +348,6 @@ export function documentToResult(
   };
 }
 
-/**
- * Acompanha um job que já existe e devolve o primeiro documento pronto.
- *
- * Separado da criação de propósito: o job pode nascer de três jeitos, por link,
- * por envio de arquivo ou pela extensão, e o resto do caminho é idêntico. Quem
- * envia arquivo cria o job na tela de origem, onde há barra de envio, e a tela
- * de carregamento só acompanha.
- *
- * Um job rende um documento por arquivo. A lista inteira vai em `documents`, que
- * e por onde a tela troca de arquivo; os demais campos trazem o primeiro ja
- * aberto, para a tela ter o que mostrar sem uma segunda espera.
- */
 export async function followJob(
   jobId: string,
   onProgress?: (job: Job) => void
@@ -438,7 +372,6 @@ export async function followJob(
   return documentToResult(await getDocument(documents[0].id), documents);
 }
 
-/** Fluxo por link: enfileira e acompanha. */
 export async function runRepositoryJob(
   params: {
     repoUrl: string;
@@ -453,32 +386,24 @@ export async function runRepositoryJob(
   return followJob(created.id, onProgress);
 }
 
-// ---------------------------------------------------------------- envio
-
 export type Language = {
   name: string;
   display_name: string;
   extensions: string[];
 };
 
-/**
- * Linguagens que o servidor documenta. Pública: nao exige login.
- *
- * O front filtra o que envia com esta lista, e nao com uma copia fixa, para uma
- * linguagem nova no servidor passar a valer sem mexer aqui.
- */
 export async function getLanguages() {
   return get<Language[]>("/v1/meta/languages");
 }
 
-/**
- * Envia um .zip e devolve o job criado.
- *
- * XMLHttpRequest e nao fetch porque so ele informa o progresso do ENVIO. Subir
- * dezenas de megabytes sem nenhum sinal parece travamento, e a pessoa fecha a
- * aba. O `Content-Type` fica por conta do navegador: ele precisa gerar o
- * separador do multipart, e fixar o cabecalho na mao quebra o envio.
- */
+function parseJsonOrNull<T>(text: string): T | null {
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
 export function createUploadJob(
   file: File,
   depth: string | null,
@@ -489,8 +414,6 @@ export function createUploadJob(
     form.append("file", file, file.name);
     form.append("output_language", "pt-BR");
 
-    // Omitido, e nao enviado vazio: a API valida o campo como enumeracao, e
-    // string vazia e recusada com 422.
     if (depth) form.append("depth", depth);
 
     const request = new XMLHttpRequest();
@@ -509,13 +432,7 @@ export function createUploadJob(
       reject(new Error("Não foi possível enviar o arquivo. Verifique sua conexão."));
 
     request.onload = () => {
-      let corpo: { message?: string } | null = null;
-
-      try {
-        corpo = JSON.parse(request.responseText);
-      } catch {
-        // Resposta que nao e JSON: vem do proxy, nao da aplicacao.
-      }
+      const corpo = parseJsonOrNull<{ message?: string }>(request.responseText);
 
       if (request.status >= 200 && request.status < 300) {
         resolve(corpo as unknown as Job);
@@ -536,8 +453,6 @@ export function createUploadJob(
     request.send(form);
   });
 }
-
-// ----------------------------------------------------------------- painel
 
 export type AdminAccount = {
   id: string;
@@ -588,7 +503,6 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
   );
 }
 
-/** O motivo é obrigatório: a API recusa sem ele, e com razão. */
 export async function changeAccountPlan(userId: string, plan: string, reason: string) {
   return patch<AdminAccount>(`/v1/admin/accounts/${userId}/plan`, { plan, reason });
 }
@@ -614,15 +528,6 @@ export function resolveBackendUrl(path?: string | null) {
   return path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
 }
 
-/**
- * Baixa um artefato gerado (PDF, Markdown, JSON).
- *
- * Os arquivos nao sao mais servidos por URL publica: a v1 montava as pastas de
- * saida com `StaticFiles` e nomes previsiveis, entao qualquer um baixava a
- * documentacao de qualquer cliente adivinhando o nome. Agora o artefato e
- * renderizado sob demanda e exige o header Authorization. Como `window.open`
- * nao envia headers, o conteudo vem por fetch e o download sai de um blob.
- */
 export async function downloadArtifact(path?: string | null, fallbackName = "documento") {
   const url = resolveBackendUrl(path);
 
@@ -643,13 +548,11 @@ export async function downloadArtifact(path?: string | null, fallbackName = "doc
   const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
-  // O nome vem do Content-Disposition da API; este e so o reserva.
   link.href = objectUrl;
   link.download = fallbackName;
   document.body.appendChild(link);
   link.click();
   link.remove();
 
-  // Sem isto o blob fica retido na memoria da aba ate o reload.
   URL.revokeObjectURL(objectUrl);
 }

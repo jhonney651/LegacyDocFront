@@ -45,7 +45,6 @@ type ApiResponse = {
   findings_locked?: boolean;
 };
 
-/** As severidades da API mapeadas nas tres faixas visuais da tela. */
 const ROTULO_DE_SEVERIDADE: Record<string, string> = {
   critical: "Crítico",
   high: "Alto",
@@ -60,7 +59,6 @@ function classeDeSeveridade(severidade: string) {
   return "low";
 }
 
-/** Cadeado. Inline para nao depender de fonte de icone. */
 function LockIcon() {
   return (
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
@@ -121,15 +119,11 @@ function getStackByLanguage(language: string) {
 }
 
 export default function Resultado() {
-
   const navigate = useNavigate();
 
   const raw = localStorage.getItem("legacyDocResult");
   const repoUrl = localStorage.getItem("repoUrl");
 
-  // Um job rende um documento por arquivo. A tela abre no primeiro e troca sob
-  // demanda, em vez de baixar os catorze de uma vez: o payload completo de um
-  // repositorio medio nao cabe confortavelmente em localStorage.
   const [result, setResult] = useState<ApiResponse | null>(() =>
     raw ? JSON.parse(raw) : null
   );
@@ -137,8 +131,6 @@ export default function Resultado() {
 
   const documents = result?.documents ?? [];
 
-  // Reobserva quando o arquivo aberto muda: a troca renderiza um conteudo
-  // novo, e quem chegou depois tambem precisa ser revelado.
   useRevelar([result?.file]);
 
   async function abrirArquivo(item: DocumentSummary) {
@@ -178,17 +170,8 @@ export default function Resultado() {
 
   const findings = result?.findings ?? [];
 
-  /**
-   * Duas razoes diferentes para nao haver pontos, e a tela precisa dizer qual.
-   *
-   * Ou a analise rodou num nivel que nem procura melhorias, ou ela achou e o
-   * plano nao libera ver. A segunda e reversivel na hora, sem reprocessar e
-   * sem cobrar de novo, e isso muda o que vale escrever para a pessoa.
-   */
   const bloqueadosPeloPlano = Boolean(result?.findings_locked);
 
-  // Roxo so quando o documento foi auditado. Um relatorio do nivel mais raso
-  // fica azul, e a diferenca se reconhece sem legenda.
   const modoDoRelatorio = result?.depth === "pro" ? "pro" : undefined;
 
   const repoName = getRepoName(repoUrl);
@@ -274,8 +257,6 @@ export default function Resultado() {
         className="result-page"
         data-modo={modoDoRelatorio}
       >
-        {/* Documento auditado veste a cor do Pro. Quem abre um relatorio do
-            nivel mais raso ve azul e reconhece a diferenca sem legenda. */}
         <section className="report-paper">
           <header className="report-header">
             <div className="report-brand">
@@ -293,9 +274,6 @@ export default function Resultado() {
               <div className="report-kicker-row">
                 <span className="report-kicker">DOCUMENTAÇÃO TÉCNICA</span>
 
-                {/* O selo diz com que profundidade este documento foi feito.
-                    Sem isso, dois relatorios de custo muito diferente ficam
-                    indistinguiveis depois de baixados. */}
                 {result.depth === "pro" && (
                   <span className="pro-badge">Auditado</span>
                 )}

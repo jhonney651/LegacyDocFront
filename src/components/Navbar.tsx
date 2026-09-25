@@ -7,22 +7,12 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(getAuthToken()));
 
-  /**
-   * Se esta conta abre o painel.
-   *
-   * Esconder o link não é controle de acesso: o painel recusa por conta própria
-   * quem não for administrador, respondendo 404. Isto existe para não oferecer
-   * uma porta que a pessoa vai bater e não passar.
-   */
   const [isAdmin, setIsAdmin] = useState(false);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("theme");
     return saved ? saved === "dark" : true;
   });
 
-  // Sem `setState` sincrono aqui: sair da conta nao zera o estado por efeito,
-  // e sim deixa de ser considerado na hora de desenhar. Zerar aqui provocaria
-  // um render a mais so para apagar um booleano.
   useEffect(() => {
     if (!isAuthenticated) return;
 

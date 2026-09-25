@@ -34,8 +34,6 @@ export default function NovaSenha() {
       setCarregando(true);
       const resposta = await confirmPasswordReset(token, senha);
 
-      // A API devolve sessao junto com a troca, então o usuário já entra
-      // autenticado em vez de digitar a senha que acabou de criar.
       setAuthToken(resposta.access_token);
       navigate("/");
     } catch (err) {

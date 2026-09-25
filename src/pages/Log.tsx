@@ -45,22 +45,6 @@ export default function Log() {
   const [erro, setErro] = useState<string | null>(null);
   const [abrindo, setAbrindo] = useState<string | null>(null);
 
-  /**
-   * O histórico vem do servidor, e não do navegador.
-   *
-   * Ele morava em `localStorage`, o que parecia inofensivo e não era: nada ali
-   * é vinculado a uma conta, então quem entrasse depois no mesmo navegador via
-   * as análises de quem entrou antes. O servidor filtra por dono, então pedir a
-   * ele resolve a classe inteira do problema em vez de remendar caso a caso.
-   */
-  /**
-   * Busca a lista e entrega o resultado por callback, em vez de mexer no
-   * estado por conta propria.
-   *
-   * Quem chama decide o que fazer, e isso importa: chamada a partir de um
-   * efeito, uma funcao que muda estado de forma sincrona provoca render em
-   * cascata. Aqui o estado so muda dentro do callback, depois da resposta.
-   */
   const buscar = useCallback(
     (aplicar: (lista: Job[] | null, erro: string | null) => void) => {
       if (!getAuthToken()) {
@@ -81,8 +65,6 @@ export default function Log() {
   );
 
   useEffect(() => {
-    // Guarda de desmontagem: sair da tela antes de a resposta chegar nao pode
-    // tentar escrever num componente que ja saiu.
     let ativo = true;
 
     buscar((lista, falha) => {
@@ -98,8 +80,6 @@ export default function Log() {
     };
   }, [buscar]);
 
-  /** Recarrega a pedido. O indicador liga aqui porque isto sai de um clique,
-   *  e nao de um efeito. */
   function atualizar() {
     setCarregando(true);
 
@@ -110,7 +90,6 @@ export default function Log() {
     });
   }
 
-  /** Busca os documentos do job e abre o primeiro. */
   async function abrirResultado(job: Job) {
     if (abrindo) return;
 
@@ -131,8 +110,6 @@ export default function Log() {
         JSON.stringify(documentToResult(detalhe, documentos))
       );
 
-      // `repoUrl` e reescrito sempre, nunca so quando ha valor: deixar o
-      // anterior faria o relatorio mostrar a origem de outra analise.
       localStorage.setItem("repoUrl", job.source ?? "");
 
       navigate("/resultado", { viewTransition: true });
