@@ -311,6 +311,7 @@ export function clearLocalSession() {
     "repoUrl",
     "repoBranch",
     "repoDepth",
+    "pendingJobId",
   ]) {
     localStorage.removeItem(chave);
   }
@@ -402,23 +403,22 @@ export function documentToResult(
 }
 
 /**
- * Fluxo completo: enfileira, acompanha e devolve o job pronto.
+ * Acompanha um job que já existe e devolve o primeiro documento pronto.
  *
- * Um job rende um documento por arquivo. A lista inteira vai em `documents`,
- * que e por onde a tela troca de arquivo; os demais campos trazem o primeiro
- * ja aberto, para a tela ter o que mostrar sem uma segunda espera.
+ * Separado da criação de propósito: o job pode nascer de três jeitos, por link,
+ * por envio de arquivo ou pela extensão, e o resto do caminho é idêntico. Quem
+ * envia arquivo cria o job na tela de origem, onde há barra de envio, e a tela
+ * de carregamento só acompanha.
+ *
+ * Um job rende um documento por arquivo. A lista inteira vai em `documents`, que
+ * e por onde a tela troca de arquivo; os demais campos trazem o primeiro ja
+ * aberto, para a tela ter o que mostrar sem uma segunda espera.
  */
-export async function runRepositoryJob(
-  params: {
-    repoUrl: string;
-    branch?: string | null;
-    paths?: string[];
-    depth?: string | null;
-  },
+export async function followJob(
+  jobId: string,
   onProgress?: (job: Job) => void
 ): Promise<GenerateResponse> {
-  const created = await createRepositoryJob(params);
-  const finished = await waitForJob(created.id, onProgress);
+  const finished = await waitForJob(jobId, onProgress);
 
   if (finished.status !== "succeeded") {
     throw new Error(
@@ -431,11 +431,110 @@ export async function runRepositoryJob(
 
   if (documents.length === 0) {
     throw new Error(
-      "Nenhum arquivo suportado foi encontrado no repositorio informado."
+      "Nenhum arquivo suportado foi encontrado no material enviado."
     );
   }
 
   return documentToResult(await getDocument(documents[0].id), documents);
+}
+
+/** Fluxo por link: enfileira e acompanha. */
+export async function runRepositoryJob(
+  params: {
+    repoUrl: string;
+    branch?: string | null;
+    paths?: string[];
+    depth?: string | null;
+  },
+  onProgress?: (job: Job) => void
+): Promise<GenerateResponse> {
+  const created = await createRepositoryJob(params);
+
+  return followJob(created.id, onProgress);
+}
+
+// ---------------------------------------------------------------- envio
+
+export type Language = {
+  name: string;
+  display_name: string;
+  extensions: string[];
+};
+
+/**
+ * Linguagens que o servidor documenta. Pública: nao exige login.
+ *
+ * O front filtra o que envia com esta lista, e nao com uma copia fixa, para uma
+ * linguagem nova no servidor passar a valer sem mexer aqui.
+ */
+export async function getLanguages() {
+  return get<Language[]>("/v1/meta/languages");
+}
+
+/**
+ * Envia um .zip e devolve o job criado.
+ *
+ * XMLHttpRequest e nao fetch porque so ele informa o progresso do ENVIO. Subir
+ * dezenas de megabytes sem nenhum sinal parece travamento, e a pessoa fecha a
+ * aba. O `Content-Type` fica por conta do navegador: ele precisa gerar o
+ * separador do multipart, e fixar o cabecalho na mao quebra o envio.
+ */
+export function createUploadJob(
+  file: File,
+  depth: string | null,
+  onProgress?: (percent: number) => void
+): Promise<Job> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    form.append("output_language", "pt-BR");
+
+    // Omitido, e nao enviado vazio: a API valida o campo como enumeracao, e
+    // string vazia e recusada com 422.
+    if (depth) form.append("depth", depth);
+
+    const request = new XMLHttpRequest();
+    request.open("POST", `${API_BASE_URL}/v1/jobs/upload`);
+
+    const token = getAuthToken();
+    if (token) request.setRequestHeader("Authorization", `Bearer ${token}`);
+
+    request.upload.onprogress = (evento) => {
+      if (evento.lengthComputable) {
+        onProgress?.(Math.round((evento.loaded / evento.total) * 100));
+      }
+    };
+
+    request.onerror = () =>
+      reject(new Error("Não foi possível enviar o arquivo. Verifique sua conexão."));
+
+    request.onload = () => {
+      let corpo: { message?: string } | null = null;
+
+      try {
+        corpo = JSON.parse(request.responseText);
+      } catch {
+        // Resposta que nao e JSON: vem do proxy, nao da aplicacao.
+      }
+
+      if (request.status >= 200 && request.status < 300) {
+        resolve(corpo as unknown as Job);
+        return;
+      }
+
+      if (request.status === 401) clearAuthToken();
+
+      reject(
+        new Error(
+          request.status === 413
+            ? "O arquivo passa do limite de 50 MB."
+            : corpo?.message || "Não foi possível enviar o arquivo."
+        )
+      );
+    };
+
+    request.send(form);
+  });
 }
 
 // ----------------------------------------------------------------- painel

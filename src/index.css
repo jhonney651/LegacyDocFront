@@ -2617,3 +2617,148 @@ body.light .admin-plano.plano-team {
   margin-left: 8px;
   color: var(--primary-text);
 }
+
+/* =========================================================
+   29. ENVIO DE CODIGO DO COMPUTADOR
+
+   Tudo pelos tokens de cor: a area acompanha o azul e vira roxa
+   junto com o resto da tela quando o nivel Pro esta escolhido.
+========================================================= */
+
+.origem-toggle {
+  display: inline-flex;
+  padding: 4px;
+  margin-bottom: 14px;
+  gap: 4px;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.origem-toggle button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--speed) var(--ease), color var(--speed) var(--ease);
+}
+
+.origem-toggle button[aria-pressed="true"] {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.origem-computador {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  max-width: 740px;
+}
+
+.upload-picker,
+.upload-resumo {
+  padding: 22px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  text-align: center;
+  transition: border-color var(--speed) var(--ease), background-color var(--speed) var(--ease);
+}
+
+/* Solido depois de escolher: o tracejado convida a soltar algo, e ja nao ha
+   nada a soltar. */
+.upload-resumo {
+  border-style: solid;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upload-picker[data-arrastando="sim"] {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.upload-titulo {
+  margin: 0 0 6px;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.upload-dica {
+  margin: 0 auto 16px;
+  max-width: 46ch;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.upload-acoes {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.upload-resumo-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.upload-resumo p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+}
+
+.upload-nota {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.upload-aviso {
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  color: var(--text);
+}
+
+.upload-erro {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--text);
+  font-size: 0.84rem;
+  text-align: left;
+}
+
+.origem-analisar {
+  align-self: stretch;
+  min-height: 48px;
+}
+
+.origem-barra {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--card-dark);
+  overflow: hidden;
+}
+
+.origem-barra > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 200ms var(--ease);
+}

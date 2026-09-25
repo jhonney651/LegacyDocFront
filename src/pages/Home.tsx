@@ -1,8 +1,16 @@
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { getAuthToken, getCurrentUser, type CurrentUser } from "../services/api";
+import {
+  createUploadJob,
+  getAuthToken,
+  getCurrentUser,
+  getLanguages,
+  type CurrentUser,
+} from "../services/api";
 import { useRevelar } from "../hooks/useRevelar";
+import UploadPicker from "../components/UploadPicker";
+import type { PreparedUpload } from "../services/upload";
 
 type DepthInfo = {
   title: string;
@@ -64,6 +72,19 @@ export default function Home() {
   const campoRepo = useRef<HTMLInputElement>(null);
 
   /**
+   * De onde vem o código: de um link ou da máquina da pessoa.
+   *
+   * Sistema legado, o caso comum, muitas vezes nem está no GitHub. Os dois
+   * caminhos terminam na mesma fila e na mesma tela de resultado.
+   */
+  const [origem, setOrigem] = useState<"link" | "computador">("link");
+  const [extensoes, setExtensoes] = useState<Set<string> | null>(null);
+  const [material, setMaterial] = useState<PreparedUpload | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [progressoEnvio, setProgressoEnvio] = useState(0);
+  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
+
+  /**
    * Nível travado que a pessoa clicou para ver como é.
    *
    * Separado de `depth` de propósito: espiar muda o visual, não muda o que
@@ -75,6 +96,22 @@ export default function Home() {
   // Reobserva quando a conta carrega: os cartoes de profundidade so
   // existem depois que a API responde qual e o plano.
   useRevelar([account?.id]);
+
+  // Extensoes que o servidor documenta, para filtrar a pasta escolhida.
+  useEffect(() => {
+    let ativo = true;
+
+    getLanguages()
+      .then((lista) => {
+        if (!ativo) return;
+        setExtensoes(new Set(lista.flatMap((l) => l.extensions.map((e) => e.toLowerCase()))));
+      })
+      .catch(() => ativo && setExtensoes(new Set()));
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   // O modo Pro veste a pagina inteira, barra de navegacao incluida. Metade
   // da tela mudando de cor e a outra metade nao pareceria defeito, nao
@@ -128,14 +165,43 @@ export default function Home() {
       .catch(() => setAccount(null));
   }, []);
 
+  async function enviarDoComputador() {
+    if (!material) return;
+
+    setErroEnvio(null);
+    setProgressoEnvio(0);
+    setEnviando(true);
+
+    try {
+      const job = await createUploadJob(material.file, depth || null, setProgressoEnvio);
+
+      // O job ja existe. A tela de carregamento so acompanha, e para isso basta
+      // o id: o arquivo em si nao cabe em localStorage e nao precisa ir junto.
+      localStorage.setItem("pendingJobId", job.id);
+      localStorage.setItem("repoUrl", material.label);
+      localStorage.setItem("repoBranch", "");
+      localStorage.setItem("repoDepth", depth);
+      navigate("/loading", { viewTransition: true });
+    } catch (falha) {
+      setErroEnvio(falha instanceof Error ? falha.message : "Não foi possível enviar.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   function handleAnalyze() {
-    if (!repoUrl.trim()) {
-      alert("Cole um link de repositório.");
+    if (!getAuthToken()) {
+      navigate("/login", { viewTransition: true });
       return;
     }
 
-    if (!getAuthToken()) {
-      navigate("/login", { viewTransition: true });
+    if (origem === "computador") {
+      void enviarDoComputador();
+      return;
+    }
+
+    if (!repoUrl.trim()) {
+      alert("Cole um link de repositório.");
       return;
     }
 
@@ -170,6 +236,68 @@ export default function Home() {
             tecnologias utilizadas e possíveis melhorias no projeto.
           </p>
 
+          {account && (
+            <div className="origem-toggle" role="group" aria-label="Origem do código">
+              <button
+                type="button"
+                aria-pressed={origem === "link"}
+                onClick={() => setOrigem("link")}
+                disabled={enviando}
+              >
+                Link do repositório
+              </button>
+
+              <button
+                type="button"
+                aria-pressed={origem === "computador"}
+                onClick={() => setOrigem("computador")}
+                disabled={enviando}
+              >
+                Do meu computador
+              </button>
+            </div>
+          )}
+
+          {origem === "computador" && account ? (
+            <div className="origem-computador">
+              <UploadPicker
+                extensions={extensoes}
+                planMaxFiles={account.plan.max_files_per_job}
+                disabled={enviando}
+                onChange={(pronto) => {
+                  setMaterial(pronto);
+                  setErroEnvio(null);
+                }}
+              />
+
+              {erroEnvio && (
+                <p className="upload-erro" role="alert">
+                  {erroEnvio}
+                </p>
+              )}
+
+              <button
+                type="button"
+                className="btn origem-analisar"
+                disabled={!material || enviando}
+                onClick={handleAnalyze}
+              >
+                {enviando ? `Enviando ${progressoEnvio}%` : "Analisar"}
+              </button>
+
+              {enviando && (
+                <div
+                  className="origem-barra"
+                  role="progressbar"
+                  aria-valuenow={progressoEnvio}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div style={{ width: `${Math.max(progressoEnvio, 2)}%` }} />
+                </div>
+              )}
+            </div>
+          ) : (
           <div className="home-search">
             <input
               ref={campoRepo}
@@ -191,8 +319,9 @@ export default function Home() {
               Analisar
             </button>
           </div>
+          )}
 
-          {account && (
+          {account && origem === "link" && (
             <div className="home-branch">
               <label htmlFor="branch">Branch</label>
 

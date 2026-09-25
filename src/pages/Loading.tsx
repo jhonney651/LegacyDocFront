@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { runRepositoryJob, type Job } from "../services/api";
+import { followJob, runRepositoryJob, type Job } from "../services/api";
 
 export default function Loading() {
   const navigate = useNavigate();
@@ -21,6 +21,12 @@ export default function Loading() {
       const branch = localStorage.getItem("repoBranch");
       const depth = localStorage.getItem("repoDepth");
 
+      // Quem envia arquivo cria o job na tela anterior, onde existe a barra de
+      // envio, e chega aqui so para acompanhar. Lido e apagado na hora: um id
+      // que sobrasse faria a proxima visita a esta tela reabrir o job antigo.
+      const pendingJobId = localStorage.getItem("pendingJobId");
+      localStorage.removeItem("pendingJobId");
+
       if (!repoUrl) {
         alert("Nenhum repositório informado.");
         navigate("/", { viewTransition: true });
@@ -33,7 +39,9 @@ export default function Loading() {
       }
 
       try {
-        const data = await runRepositoryJob({ repoUrl, branch, depth }, acompanhar);
+        const data = pendingJobId
+          ? await followJob(pendingJobId, acompanhar)
+          : await runRepositoryJob({ repoUrl, branch, depth }, acompanhar);
 
         // Guarda so o resultado aberto agora, para a proxima tela nao ter de
         // buscar de novo. O historico nao e escrito aqui: ele vive no
